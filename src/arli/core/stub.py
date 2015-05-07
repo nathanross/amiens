@@ -1,0 +1,216 @@
+#!/usr/bin/python3
+
+# Copyright 2015 Nathan Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+from arli.core import util
+from arli.core.enums import DOWNLOADED
+
+import subprocess
+import shutil
+import glob
+import re
+
+class Stub:
+    def __init__(self, tmp_id, ident, metadata,
+                 download_level=DOWNLOADED.NONE.value,
+                 download_lock=0, rating=None, comment=None):
+        self.data={
+            tmpId: tmp_id,
+            ident: ident,
+            metadata: metadata,
+            downloadLevel: download_level,
+            downloadLock : download_lock,
+            rating: rating,
+            comment: comment
+        }
+        self.l_src=None
+
+    @staticmethod
+    def _extractArchives(l_d_out, fnames):
+        archives=[]
+        ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
+        for fname in fnames:            
+            if ext_match(['7z','tar\.gz','tgz','tar','zip','rar'],
+                         fname):
+                archives.append(fname)
+        extract_dir=l_d_out
+        for fname in archives:
+            l_arch=l_d_out+'/'+fname
+            if len(archives) > 1:
+                #don't truncate filename as may have multiple archives
+                # of same name but different ext
+                extract_dir=l_d_out+'/d_'+fname                
+            if ext_match(['tgz','tar', 'tar\.gz'], fname):
+                subprocess.call(['tar', '-xf', fname, '-C', extract_dir])
+            elif ext_match(['7z'], fname):
+                subprocess.call(['7zr', 'x', '-o', extract_dir, fname])
+            elif ext_match(['zip'], fname):
+                subprocess.call(['unzip', fname, '-d', extract_dir])
+            elif ext_match(['rar'], fname):
+                subprocess.call(['unrar', 'x', fname, extract_dir])
+
+    @staticmethod
+    def _getLength(l_d_out):
+        #extraction of archive files means there may be 
+    
+    @staticmethod
+    def _downloadFnames(l_d_out, fnames, getLength=False):
+        urls = []
+        for fname in fnames:
+            # we can use https in the below url,
+            # but it makes most files go about 1/4 speed.        
+            f_url='http://archive.org/download/{0}/{1}'
+            f_url=f_url.format(ident, fname)
+            urls.append(f_url)
+        if len(urls) == 0:
+            return True
+        wget_call=['wget', '-P ', l_d_out]
+        wget_call.extend(urls)
+        err_code=subprocess.call(wget_call)
+        if err_code != 0:
+            util.Log.fatal('download error')
+            #return False
+        #you're going to want to install unrar, p7zip, unzip
+        # sox, libsox-fmt-mp3
+        Stub._extractArchives(l_d_out, fnames)
+        
+        return True
+        
+    
+        
+    
+    @staticmethod
+    def _downloadTo(ident, scratchdir, l_d_out, quality):        
+        filedata_etree = _FetchInfo.as_etree(ident, _FetchInfo.METADATA)
+        fnames=[]
+        if quality == DOWNLOADED.ORIGINAL.value:
+            for f in filedata_etree:
+                if f.get('source') == 'original':
+                    fnames.append(f.get('name'))
+                Stub._downloadFnames(scratchdir+'/original', fnames)
+        shutil.move(
+            glob.glob(scratchdir+'/*'),
+            l_d_out
+        )
+        
+    def write(self, arg_scratchdir, l_out=None):
+        #this system has FILESYSTEM lock,
+        # but not OBJECT lock.
+
+        # The way this deals with resource contention for filesystem lock is:
+        #  - if there's currently files downloaded that are same or higher qual.
+        #     level
+        #     than that requested, no action is taken, and the stub file's
+        #     download level is not altered.
+        #  - if the files downloaded are of lower quality, the first write
+        #     of higher quality (incl. the initial download) places a LOCK
+        #     in the stub of the timestamp to begin download, without changing
+        #     the level in the stub.
+        #  - once a download completes the LOCK is set to 0, and the download
+        #    level is updated to reflect the current quality level completely
+        #    downloaded.
+        #  - for 24 hours after a lock's placement in a file,
+        #    additional write requests
+        #    higher the current completely downloaded quality level are
+        #    simply ignored.
+
+        #    This means NO PRE-EMPTION or QUEUEING.
+        #     So if you are downloading SD in one process,
+        #     and then (optionally canceling the first) begin downloading HD
+        #     in another, the HD request will be cancelled and you will be
+        #     informed of this. to switch quality you have to cancel
+        #     the first process and set the lock to 0 in the stub, or wait until
+        #     the process completes then re-request.
+
+        #   IN THE FUTURE THIS MAY BE OVERWRITTEN
+        #     e.g. add a queuedDownload level, have the download functions
+        #        run a callback which polls the stub at a regular interval
+        #        to see if the queuedDownload level has increased,
+        #        if so, cancels download.
+        #        alternatively, each download folder could have a .lock
+        #        file which is checked, so that behavior where download q2, then
+        #        download q3 a minute later leads to the same behavior whether
+        #        q2 finishes rdownloading before the 2nd request or not. we could
+        #        also use an array of locks in the stub instead of lock files.
+        #
+        #     the second option is probably the best, but a bit complicated.
+        #     i think if we are not going to do it right, let's just keep
+        #     it simple until we do.
+        scratchdir=arg_scratchdir.rstrip('/')
+        
+        l=''        
+        if l_out == None:
+            l=self.l_src
+            if self.l_src == None:
+                raise 'no idea where to write this stub to...'  
+        else:
+            l=l_out.rstrip('/')
+            if self.l_src == None:
+                self.l_src=l_out
+                
+        goal = "write item stub {}".format(l)
+
+        towrite = deepcopy(self.data)
+
+        now=time.time()
+
+        towrite['downloadLock'] = now
+        if (os.path.exists(l)):
+            old_stub=util.json_read(goal, l)            
+            towrite['downloadLevel'] = old_stub['downloadLevel']
+            if old_stub['downloadLevel'] >= self.data['downloadLevel'] or \
+            ((old_stub['downloadLock'] + 60*60*24) > now) :
+                towrite['downloadLock'] = old_stub['downloadLock']
+        else:
+            towrite['downloadLevel'] = 0
+
+        util.json_write(goal, l, towrite)
+        
+        if self.data['downloadLevel'] > towrite['downloadLevel']:
+            try:
+                towrite['downloadLevel'] = Stub._downloadTo(
+                    ident,
+                    scratchdir,
+                    l,
+                    self.data['downloadLevel']
+                )
+            except:
+                pass
+        
+        towrite['downloadLock'] = 0
+        util.json_write(goal, l, towrite)
+    
+            
+    @classmethod
+    def FromDict(cls, d):
+        if not ('downloadLevel' in d):
+            d['downloadLevel']=0
+        if not ('downloadLock' in d):
+            d['downloadLock']=False
+        return cls(d.tmpId, d.ident,
+                   d.metadata, d.downloadLevel, d.downloadLock,
+                   d.rating, d.comment)
+    @classmethod
+    def FromFile(cls, l_in):
+        goal = "read item stub {}".format(l_in)
+        return Stub.FromDict(cls, json.loads(full_read(goal, l_in)))
+    
+    def path_from_rootdir(self, outdir):
+        #creates directory for stubfile and returns stub path
+        dest=outdir+'/'+self.data.ident
+        if not (os.access(dest, 0)):
+            os.makedirs(dest)
+        return dest+'/.arli.json'

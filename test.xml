@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files>
+  <file name="Indianevaa [www.RipperTMX.Com].flac" source="original">
+    <mtime>1416140931</mtime>
+    <size>81476509</size>
+    <md5>c39629dae0e13b49c03d589c005c2c84</md5>
+    <crc32>807f6d47</crc32>
+    <sha1>5845b1b62d29d506fcfd158f2314d75e4f80a323</sha1>
+    <format>24bit Flac</format>
+    <length>363.58</length>
+    <height>720</height>
+    <width>720</width>
+  </file>
+  <file name="En Mannavva [www.RipperTMX.Com]flac" source="original">
+    <mtime>1416140908</mtime>
+    <size>63282766</size>
+    <md5>e4a6087439352708d00c7a1fa9b66fcf</md5>
+    <crc32>d281804b</crc32>
+    <sha1>4cc43ee919c50109751e20a8bdca5c79aee71652</sha1>
+    <format>Motion JPEG</format>
+    <length>284.63</length>
+    <height>720</height>
+    <width>720</width>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com].flac" source="original">
+    <mtime>1416140954</mtime>
+    <size>83086302</size>
+    <md5>d9e07da678ec40a28f5de5346cc47242</md5>
+    <crc32>e81b8f34</crc32>
+    <sha1>b6d64cd50a4e6856239288b54e6fbc4534ef4464</sha1>
+    <format>24bit Flac</format>
+    <length>360.58</length>
+    <height>720</height>
+    <width>720</width>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com_meta.sqlite" source="original">
+    <mtime>1416141011</mtime>
+    <size>13312</size>
+    <format>Metadata</format>
+    <md5>816cd54eadf6f5b9a886fb8ea51422d6</md5>
+    <crc32>1dc8597e</crc32>
+    <sha1>ddc7fac467b4487df41037ac1dda5be910ef55c1</sha1>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com].flac" source="original">
+    <mtime>1416140993</mtime>
+    <size>62634069</size>
+    <md5>822d6d3dd03af3ccf1ac028ffef4cd2a</md5>
+    <crc32>209f46f2</crc32>
+    <sha1>ab1e91f617c35f4382df8ce8d80e56ca3507f57f</sha1>
+    <format>24bit Flac</format>
+    <length>264.94</length>
+    <height>720</height>
+    <width>720</width>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com].flac" source="original">
+    <mtime>1416141005</mtime>
+    <size>70015446</size>
+    <md5>9f0905d3f9ac283cc96d911c7f251fd0</md5>
+    <crc32>8c2ffe79</crc32>
+    <sha1>a43375ef51f8bac88b2bf049725bcbba4dba222f</sha1>
+    <format>24bit Flac</format>
+    <length>321.94</length>
+    <height>720</height>
+    <width>720</width>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com].mp3" source="derivative">
+    <bitrate>207</bitrate>
+    <length>04:24</length>
+    <format>VBR MP3</format>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <mtime>1416141400</mtime>
+    <size>6871040</size>
+    <md5>38865b517c04fc2218cfb43a631e9db7</md5>
+    <crc32>133cd808</crc32>
+    <sha1>a35aa91ccba563f2d941bac36ca78c18297b8598</sha1>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com]_esslow.json.gz" source="derivative">
+    <format>Essentia Low GZ</format>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <mtime>1416141827</mtime>
+    <size>24459</size>
+    <md5>96c8f63b9d34560a55825556e40774ed</md5>
+    <crc32>5f4a5c27</crc32>
+    <sha1>2d11b95347b74dd9bac82289670484a2eafe9df6</sha1>
+  </file>
+  <file name="Indianevaa [www.RipperTMX.Com].mp3" source="derivative">
+    <bitrate>203</bitrate>
+    <length>06:03</length>
+    <format>VBR MP3</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <mtime>1416141381</mtime>
+    <size>9211392</size>
+    <md5>6ac8a30ffff5672b6cf781e6c96382b5</md5>
+    <crc32>865483d3</crc32>
+    <sha1>8b3f8aa05829cfa334e4ff9f20508c695dc61ade</sha1>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Indianevaa [www.RipperTMX.Com]_spectrogram.png" source="derivative">
+    <format>Spectrogram</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <mtime>1416141582</mtime>
+    <size>320716</size>
+    <md5>047c62aaa4d1afa4db23e36308166383</md5>
+    <crc32>99010f81</crc32>
+    <sha1>e8125169a4cc161e1c9e555e0db743d761075f5c</sha1>
+  </file>
+  <file name="En Mannavva [www.RipperTMX.ogv" source="derivative">
+    <format>Ogg Video</format>
+    <original>En Mannavva [www.RipperTMX.Com]flac</original>
+    <mtime>1416141577</mtime>
+    <size>4713731</size>
+    <md5>497d2d9a1075d35db7fc82cd86ed6217</md5>
+    <crc32>c99f0553</crc32>
+    <sha1>32d30470bb46b40d5fc608f2f05d77af35edef1c</sha1>
+    <length>284.63</length>
+    <height>300</height>
+    <width>300</width>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com]_spectrogram.png" source="derivative">
+    <format>Spectrogram</format>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <mtime>1416141595</mtime>
+    <size>313539</size>
+    <md5>66ead42da33d1d8416ad76e21dff12f3</md5>
+    <crc32>41156f3a</crc32>
+    <sha1>ee6dacaac0fcef8a3ce56b36521af351f908f197</sha1>
+  </file>
+  <file name="En Mannavva [www.RipperTMX.gif" source="derivative">
+    <format>Animated GIF</format>
+    <original>En Mannavva [www.RipperTMX.Com]flac</original>
+    <mtime>1416141310</mtime>
+    <size>14373</size>
+    <md5>7ab11554149f5ee7f1389c802f15719a</md5>
+    <crc32>fd46abf3</crc32>
+    <sha1>4f854435f0c39978ecae1fdf46e6da100adcbb79</sha1>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com]_esslow.json.gz" source="derivative">
+    <format>Essentia Low GZ</format>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141761</mtime>
+    <size>24065</size>
+    <md5>142ea79d61b18ef55ca3d77acc923aa7</md5>
+    <crc32>9ae43606</crc32>
+    <sha1>b5120084484c68da274c3c32a247f9251f8bcf26</sha1>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com.thumbs/En Mannavva [www.RipperTMX_000001.jpg" source="derivative">
+    <format>Thumbnail</format>
+    <original>En Mannavva [www.RipperTMX.Com]flac</original>
+    <mtime>1416141312</mtime>
+    <size>5312</size>
+    <md5>35b6930f9436034535d9b0f203442d65</md5>
+    <crc32>530cef91</crc32>
+    <sha1>5bdfb89657a1ceda7b3745541facf1228b5cdfa0</sha1>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com].ogg" source="derivative">
+    <format>Ogg Vorbis</format>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <mtime>1416141419</mtime>
+    <size>3256809</size>
+    <md5>96f4aa1e16a17a42ca065116ff6e95c1</md5>
+    <crc32>4d7602d8</crc32>
+    <sha1>601f3a83d2b7356fa2c4a14293778272fc9f2060</sha1>
+    <length>264.94</length>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com]_spectrogram.png" source="derivative">
+    <format>Spectrogram</format>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141590</mtime>
+    <size>312190</size>
+    <md5>920b444a81b53f18dbd41cea36c5554e</md5>
+    <crc32>925f3f31</crc32>
+    <sha1>ac946d2941f66485fde34a7e467f617cd277fc53</sha1>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com].ogg" source="derivative">
+    <format>Ogg Vorbis</format>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141483</mtime>
+    <size>3765759</size>
+    <md5>454db6d718fefb48a91374d20b5cce65</md5>
+    <crc32>a507653c</crc32>
+    <sha1>5993e295a81d0c06e83e8ef87305f9bf545031cf</sha1>
+    <length>321.94</length>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com]_spectrogram.png" source="derivative">
+    <format>Spectrogram</format>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <mtime>1416141586</mtime>
+    <size>310664</size>
+    <md5>9bb560472d9f90b995930be87920f0e3</md5>
+    <crc32>4a7591c2</crc32>
+    <sha1>b048ac36924d5e47a063dfed0965adc052f3e3e2</sha1>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com.md5" source="derivative">
+    <format>Checksums</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141544</mtime>
+    <size>289</size>
+    <md5>64197281439a91345bbebdf86a6c3dbc</md5>
+    <crc32>46dbbbc4</crc32>
+    <sha1>2c229276dcca3ccdf2a4f44e501eea80ba5c731b</sha1>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com]_esslow.json.gz" source="derivative">
+    <format>Essentia Low GZ</format>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <mtime>1416141919</mtime>
+    <size>26138</size>
+    <md5>eb425520a0bfcc52b529f8e54d6fbd58</md5>
+    <crc32>18139dcd</crc32>
+    <sha1>f42f42664e9364448fecf59e7bcf34dfa3282554</sha1>
+  </file>
+  <file name="Indianevaa [www.RipperTMX.Com].ogg" source="derivative">
+    <format>Ogg Vorbis</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <mtime>1416141466</mtime>
+    <size>4454440</size>
+    <md5>1359042d576dbd7f0e5775b02bcab058</md5>
+    <crc32>3632b577</crc32>
+    <sha1>784d3793b31aa4c16df714ae3038a3d4f7d64665</sha1>
+    <length>363.58</length>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Indianevaa [www.RipperTMX.Com].png" source="derivative">
+    <format>PNG</format>
+    <original>Indianevaa [www.RipperTMX.Com].mp3</original>
+    <mtime>1416142001</mtime>
+    <size>10735</size>
+    <md5>6191cd796a831569407fc83375226f11</md5>
+    <crc32>f7751e7f</crc32>
+    <sha1>cef0f0f372befb044cb89e3515afa951e1adc277</sha1>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com].mp3" source="derivative">
+    <bitrate>194</bitrate>
+    <length>05:21</length>
+    <format>VBR MP3</format>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141356</mtime>
+    <size>7827968</size>
+    <md5>b5567c10970eac396e961d6f8e7e201a</md5>
+    <crc32>c5c6b3f0</crc32>
+    <sha1>aeeabc35d8acc0ad6a96337c32aeca4463d44506</sha1>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Unmaiorunaal Vellum [www.RipperTMX.Com].png" source="derivative">
+    <format>PNG</format>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].mp3</original>
+    <mtime>1416142054</mtime>
+    <size>10137</size>
+    <md5>f9211115d120c5a157e9f53efc9609cc</md5>
+    <crc32>6f018447</crc32>
+    <sha1>013f113e7f94374520c80bb9a2442f3d28fac0c6</sha1>
+  </file>
+  <file name="Oh Nanba[www.RipperTMX.Com].png" source="derivative">
+    <format>PNG</format>
+    <original>Oh Nanba[www.RipperTMX.Com].mp3</original>
+    <mtime>1416142041</mtime>
+    <size>3633</size>
+    <md5>8b3713cb4332e3ef9e7c8b3161d98e37</md5>
+    <crc32>b008b598</crc32>
+    <sha1>92106dc28829abc9a8a98c81f1b5852065ede292</sha1>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com].mp3" source="derivative">
+    <bitrate>209</bitrate>
+    <length>06:00</length>
+    <format>VBR MP3</format>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <mtime>1416141334</mtime>
+    <size>9430016</size>
+    <md5>ae793b5ab38c7a48d9c486e56f457769</md5>
+    <crc32>e304a752</crc32>
+    <sha1>ba55a2f1b7d05e8d67bedab0a520a7e524c81dd9</sha1>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com].ogg" source="derivative">
+    <format>Ogg Vorbis</format>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <mtime>1416141440</mtime>
+    <size>4525325</size>
+    <md5>5f72a49d64b21ad0d615b399e58ff2e2</md5>
+    <crc32>67412ae9</crc32>
+    <sha1>d1e3fbef8c671be2855a2c0d31673d0a7be79f27</sha1>
+    <length>360.58</length>
+    <height>0</height>
+    <width>0</width>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com.ffp" source="derivative">
+    <format>Flac FingerPrint</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <original>Mona Gasolina [www.RipperTMX.Com].flac</original>
+    <original>Oh Nanba[www.RipperTMX.Com].flac</original>
+    <original>Unmaiorunaal Vellum [www.RipperTMX.Com].flac</original>
+    <mtime>1416141545</mtime>
+    <size>285</size>
+    <md5>6ebb8928fee96a77b99c16caa826dd1d</md5>
+    <crc32>6119308c</crc32>
+    <sha1>86463b0fb478dfccd7db9a1b95e768b1d7dd3d01</sha1>
+  </file>
+  <file name="Indianevaa [www.RipperTMX.Com]_esslow.json.gz" source="derivative">
+    <format>Essentia Low GZ</format>
+    <original>Indianevaa [www.RipperTMX.Com].flac</original>
+    <mtime>1416141688</mtime>
+    <size>26296</size>
+    <md5>86c55dc984116be38d8a89ce1caf1ec4</md5>
+    <crc32>c5803e31</crc32>
+    <sha1>5a5763cddc1a1354295d5b0ef39f85791a223c25</sha1>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com_meta.xml" source="original">
+    <mtime>1416142124</mtime>
+    <size>643</size>
+    <format>Metadata</format>
+    <md5>df31ddde7af6f2e63265de92bd10d6cf</md5>
+    <crc32>39b2deeb</crc32>
+    <sha1>8d64da1011a372da8aea7e12b8e98c7ab65206cf</sha1>
+  </file>
+  <file name="Mona Gasolina [www.RipperTMX.Com].png" source="derivative">
+    <format>PNG</format>
+    <original>Mona Gasolina [www.RipperTMX.Com].mp3</original>
+    <mtime>1416142027</mtime>
+    <size>6753</size>
+    <md5>2c726712a6add1988181635b5f8fc137</md5>
+    <crc32>73051818</crc32>
+    <sha1>ae8f68fbcdbedba1b07b24231b15b9ad251d9bdb</sha1>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com_archive.torrent" source="metadata">
+    <btih>100886118cf65e9db47da82ec1038612df9d726d</btih>
+    <mtime>1416142139</mtime>
+    <size>23116</size>
+    <md5>899490eb8759b01c33974f194ae81b0f</md5>
+    <crc32>9f2ee902</crc32>
+    <sha1>f94e7efcf619c9dadc8f6c6967c0d4e77d5a4f65</sha1>
+    <format>Archive BitTorrent</format>
+  </file>
+  <file name="MonaGasolinawww.RipperTMX.Com_files.xml" source="original">
+    <format>Metadata</format>
+    <md5>e1aeeec7182e086ccafad54559c6b34f</md5>
+  </file>
+</files>
