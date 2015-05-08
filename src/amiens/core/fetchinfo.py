@@ -15,13 +15,24 @@
 # limitations under the License.
 #
 
-#!/usr/bin/python3
+from amiens.core.util import Log
 
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-from arli.cmdline.parser import parse
+import urllib.request
+import defusedxml.ElementTree as etree
 
-import os
+class FetchInfo(object):
+    METADATA=True
+    FILEDATA=False
+    
+    @staticmethod
+    def as_str(ident, meta):
+        keyword = 'meta' if (meta == FetchInfo.METADATA) else 'files'
+        url ='https://archive.org/download/{0}/{0}_{1}.xml'.format(ident, keyword)
+        res= urllib.request.urlopen(url).read()
+        Log.data('url:'+url)
+        return res.decode()
+    
+    @staticmethod
+    def as_etree(ident, meta):
+        return etree.fromstring(FetchInfo.as_str(ident, meta))
 
-if __name__ == '__main__':
-    parse(sys.argv[1:])

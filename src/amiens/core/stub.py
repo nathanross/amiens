@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-from arli.core import util
-from arli.core.enums import DOWNLOADED
+from amiens.core import util
+from amiens.core.enums import DOWNLOADED
 
 import subprocess
 import shutil
@@ -213,4 +213,4 @@ class Stub:
         dest=outdir+'/'+self.data.ident
         if not (os.access(dest, 0)):
             os.makedirs(dest)
-        return dest+'/.arli.json'
+        return dest+'/.amiens.json'

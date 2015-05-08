@@ -15,24 +15,14 @@
 # limitations under the License.
 #
 
-from arli.core.util import Log
+from amiens.core.subcmd import Subcmd
 
-import urllib.request
-import defusedxml.ElementTree as etree
+class Download(Subcmd):
 
-class FetchInfo(object):
-    METADATA=True
-    FILEDATA=False
-    
     @staticmethod
-    def as_str(ident, meta):
-        keyword = 'meta' if (meta == FetchInfo.METADATA) else 'files'
-        url ='https://archive.org/download/{0}/{0}_{1}.xml'.format(ident, keyword)
-        res= urllib.request.urlopen(url).read()
-        Log.data('url:'+url)
-        return res.decode()
-    
-    @staticmethod
-    def as_etree(ident, meta):
-        return etree.fromstring(FetchInfo.as_str(ident, meta))
-
+    def cmd(args):
+        item = args['item']
+        scratchdir = args['outdir']
+        outdir = args['outdir']
+        quality = args['quality']
+        item.write(scratchdir, outdir, quality)

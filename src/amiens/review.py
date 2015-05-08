@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from arli.core.subcmd import Subcmd
+from amiens.core.subcmd import Subcmd
 
 class Review(Subcmd):
 

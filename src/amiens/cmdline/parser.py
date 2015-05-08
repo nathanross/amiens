@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-from arli import download, find, idents, createcatalogue, review, printmetadata, learn
-from arli.cmdline.transforms import Transforms
-from arli.core.util import Log, Bcolors
+from amiens import download, find, idents, createcatalogue, review, printmetadata, learn
+from amiens.cmdline.transforms import Transforms
+from amiens.core.util import Log, Bcolors
 
 import argparse
 import traceback
@@ -42,7 +42,7 @@ class _Arg:
         self.required = required
 
 def _printUsage(commands):
-    usage_instr = ['arli <command> <options>']
+    usage_instr = ['amiens <command> <options>']
     descript_spacer_length=14
     descript_spacer = ''.join([' ' for x in range(0,
                                                   descript_spacer_length)])
@@ -64,7 +64,7 @@ def parse(args_orig):
     args = {
         'catalogue_path' : _Arg(ext='catalogue_path', short='-c',
                                 nargs='default',
-                                type=str, default="~/.arli",
+                                type=str, default="~/.amiens",
                                 help=('path to database to use'),
                                 transform=Transforms.useCatalogue),
         'media_type': _Arg(ext='media_type', short='-t',
@@ -93,7 +93,7 @@ def parse(args_orig):
                         required=True),
         'scratchdir' : _Arg(ext='scratchdir', short="-x",
                         nargs='default',
-                        type=str, default='/tmp/arli_scratch',
+                        type=str, default='/tmp/amiens_scratch',
                         help='output directory',
                         transform=Transforms.outdir),
         'quality' : _Arg(ext='quality', short="-q", 
@@ -116,11 +116,11 @@ def parse(args_orig):
     commands = [
         _Command(
             name = 'create',
-            description = 'create an arli internet archive media catalogue.',
+            description = 'create an amiens internet archive media catalogue.',
             arguments = [
                 _Arg(ext='new_catalogue_path', short='-d',
                      nargs='default',
-                     type=str, default="~/.arli",
+                     type=str, default="~/.amiens",
                      help=('path to catalogue to use'),
                      transform=Transforms.posix_generic)
             ],

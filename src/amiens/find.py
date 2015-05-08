@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-from arli.core.subcmd import Subcmd
-from arli.core import util
-from arli.core.stub import Stub
+from amiens.core.subcmd import Subcmd
+from amiens.core import util
+from amiens.core.stub import Stub
 
 class Find(Subcmd):
     @staticmethod

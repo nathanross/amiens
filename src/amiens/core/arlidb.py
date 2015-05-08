@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-from arli.core import asserts
-from arli.core import util
-from arli.core.util import Log
+from amiens.core import asserts
+from amiens.core import util
+from amiens.core.util import Log
 
 import sqlite3
 

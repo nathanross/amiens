@@ -17,15 +17,15 @@
 
 import os
 import hashlib
-from arli.core.arlidb import ArliDb
-from arli.core import util
-from arli.core.util import Log
+from amiens.core.amiensdb import ArliDb
+from amiens.core import util
+from amiens.core.util import Log
 
 class Catalogue:
     def __init__(self, rootdir, exists=True):
         self.rootdir = rootdir.rstrip('/')
         self.metadata_dir = self.rootdir+'/metadata'
-        self.db_path = self.rootdir+'/arli.sqlite'
+        self.db_path = self.rootdir+'/amiens.sqlite'
         self.adb=None
         if exists:
             self.adb = ArliDb(self.db_path)

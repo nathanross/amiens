@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-import arli.core.asserts
+import amiens.core.asserts
 from enum import Enum, IntEnum
 import os
 from os import path

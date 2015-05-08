@@ -17,13 +17,13 @@
 
 import os
 from os import path
-import arli.core.util
+import amiens.core.util
 
 def that(a, b, trace_distance=0):
     #using this keyword typically results in breaking
     # linebreak conventions.
     if (not a):
-        arli.core.util.Log.fatal(b, trace_distance+1)
+        amiens.core.util.Log.fatal(b, trace_distance+1)
 
 def dne(goal, l, trace_distance=0):
     that(not (os.access(l, 0)),

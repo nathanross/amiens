@@ -15,14 +15,13 @@
 # limitations under the License.
 #
 
-from arli.core.subcmd import Subcmd
-from arli.core.catalogue import Catalogue
+#!/usr/bin/python3
 
-class CreateCatalogue(Subcmd):
-    
-    @staticmethod
-    def cmd(args):
-        catalogue = Catalogue(
-            args['new_catalogue_path'],
-            exists=False
-        )
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+from amiens.cmdline.parser import parse
+
+import os
+
+if __name__ == '__main__':
+    parse(sys.argv[1:])

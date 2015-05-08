@@ -15,12 +15,12 @@
 # limitations under the License.
 #
 
-from arli.core import enums
-from arli.core import asserts
-from arli.core import util
-from arli.core.catalogue import Catalogue
+from amiens.core import enums
+from amiens.core import asserts
+from amiens.core import util
+from amiens.core.catalogue import Catalogue
 from os import path
-from arli.core.util import Log
+from amiens.core.util import Log
 
 # normalizes strings input from argument into valid inputs.
 # probably better way to do it would be to create args
@@ -95,7 +95,7 @@ class Transforms(object):
         asserts.exists(goal, arg)
         l=arg
         if path.isdir(goal):
-            l+='/.arli.json'
+            l+='/.amiens.json'
         stub = _Stub.FromFile(l)
         stub.l_src=l
         return stub

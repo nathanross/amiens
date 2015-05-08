@@ -15,12 +15,12 @@
 # limitations under the License.
 #
 
-from arli.core.subcmd import Subcmd
-from arli.core import enums
-from arli.core import util
-from arli.core.fetchinfo import FetchInfo
-from arli.core.util import Log
-from arli.core.arlidb import ArliDb
+from amiens.core.subcmd import Subcmd
+from amiens.core import enums
+from amiens.core import util
+from amiens.core.fetchinfo import FetchInfo
+from amiens.core.util import Log
+from amiens.core.amiensdb import ArliDb
 
 import defusedxml.ElementTree as etree
 import time

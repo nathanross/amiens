@@ -15,14 +15,14 @@
 # limitations under the License.
 #
 
-from arli.core.subcmd import Subcmd
+from amiens.core.subcmd import Subcmd
+from amiens.core.catalogue import Catalogue
 
-class Download(Subcmd):
-
+class CreateCatalogue(Subcmd):
+    
     @staticmethod
     def cmd(args):
-        item = args['item']
-        scratchdir = args['outdir']
-        outdir = args['outdir']
-        quality = args['quality']
-        item.write(scratchdir, outdir, quality)
+        catalogue = Catalogue(
+            args['new_catalogue_path'],
+            exists=False
+        )
