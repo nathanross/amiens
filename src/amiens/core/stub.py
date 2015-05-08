@@ -65,7 +65,8 @@ class Stub:
     @staticmethod
     def _getLength(l_d_out):
         #extraction of archive files means there may be 
-    
+        pass
+        
     @staticmethod
     def _downloadFnames(l_d_out, fnames, getLength=False):
         urls = []
@@ -86,6 +87,7 @@ class Stub:
         #you're going to want to install unrar, p7zip, unzip
         # sox, libsox-fmt-mp3
         Stub._extractArchives(l_d_out, fnames)
+        Stub._getLength(l_d_out, fnames)
         
         return True
         
