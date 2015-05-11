@@ -104,7 +104,7 @@ def parse(args_orig):
                                '3 is highest available,'
                                '4 is everything.'),
                          transform=Transforms.quality),
-        'filter_fq' : _Arg(ext='filter_fq', short="-q",
+        'filter_fq' : _Arg(ext='filter_fq', short="-f",
                      nargs='default',
                      type=str, default="qlib/fq.dummy.py3", 
                      help=('filequery which is used to filter find'

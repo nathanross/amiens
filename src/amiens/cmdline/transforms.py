@@ -19,6 +19,7 @@ from amiens.core import enums
 from amiens.core import asserts
 from amiens.core import util
 from amiens.core.catalogue import Catalogue
+import os
 from os import path
 from amiens.core.util import Log
 
@@ -102,9 +103,9 @@ class Transforms(object):
     
     @staticmethod
     def outdir(path_posix):
-        goal='received outdir argument'
+        goal='received dir argument <{}>'.format(path_posix)
         arg=path.expanduser(path_posix).rstrip('/')
-        if not os.path.exists(arg):
+        if not path.exists(arg):
             os.makedirs(arg)
         else:
             asserts.isdir(goal, arg)
@@ -114,13 +115,13 @@ class Transforms(object):
     @staticmethod
     def quality(arg):
         goal='received quality argument'
-        asserts.that(arg > 4, goal+' but it is higher than the maximum 4')
-        asserts.that(arg < 0, goal+' but it is lower than the minimum 1')
+        asserts.that(arg <= 4, goal+' but it is higher than the maximum 4')
+        asserts.that(arg >= 0, goal+' but it is lower than the minimum 1')
         return arg
     
     @staticmethod
     def rating(arg):
         goal='received rating argument'
-        asserts.that(arg > 5, goal+' but it is higher than the maximum 5')
-        asserts.that(arg < 0, goal+' but it is lower than the minimum 0')
+        asserts.that(arg <= 5, goal+' but it is higher than the maximum 5')
+        asserts.that(arg >= 0, goal+' but it is lower than the minimum 0')
         return arg

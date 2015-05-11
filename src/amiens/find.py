@@ -26,7 +26,7 @@ class Find(Subcmd):
         sql_filter_str='WHERE blockDownload =? AND hasMetadata=? {} LIMIT ?'
         sql_filter_str=sql_filter_str.format(fq['sql'])        
         tmpresults=adb.one_off_select(
-            ('tmpId', 'ident', 'rating', 'comment'),
+            ('tmpId', 'ident', 'rating', 'comment', 'length'),
             sql_filter_str,
             ( DOWNLOADED.NONE, test_limit)
         )

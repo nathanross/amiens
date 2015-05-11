@@ -42,10 +42,10 @@ def canread(goal, l, trace_distance=0):
          goal+' but dont have read permissions', trace_distance+1)
 
 def isdir(goal, l, trace_distance=0):
-    that(path.isdir(goal),
+    that(path.isdir(l),
          goal+' but its not a directory', trace_distance+1)
 
 def ispath(goal, l, trace_distance=0):
-    that(path.isdir(goal),
+    that(path.exists(l),
          goal+' but its not a directory', trace_distance+1)
 

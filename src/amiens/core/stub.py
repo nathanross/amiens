@@ -25,11 +25,13 @@ import re
 
 class Stub:
     def __init__(self, tmp_id, ident, metadata,
+                 length=None,
                  download_level=DOWNLOADED.NONE.value,
                  download_lock=0, rating=None, comment=None):
         self.data={
             tmpId: tmp_id,
             ident: ident,
+            length: length,
             metadata: metadata,
             downloadLevel: download_level,
             downloadLock : download_lock,
@@ -38,6 +40,7 @@ class Stub:
         }
         self.l_src=None
 
+    #you're going to want to install unrar, p7zip, unzip
     @staticmethod
     def _extractArchives(l_d_out, fnames):
         archives=[]
@@ -62,19 +65,64 @@ class Stub:
             elif ext_match(['rar'], fname):
                 subprocess.call(['unrar', 'x', fname, extract_dir])
 
-    @staticmethod
-    def _getLength(l_d_out):
-        #extraction of archive files means there may be 
-        pass
+    # you're going to want to install
+    #    sox libsox-fmt-mp3 mac flac avconv
+    # only sets length value if it is SURE that we have the complete
+    # length. returns length value in db (e.g. None if not have complete val).
+    # Example, if one of the files is a large .xyz file
+    # and we don't know how to read .xyz files (but are not sure
+    # that they are not audio or video), we return a length of None
+    # and make no change to the db
+    def _getLength(adb, ident, l_d_out):
+        if self.data['length'] != None:
+            return (True, self.data['length'])
+        read_soxi=['soxi', '-D']
+        ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
+        exts_readable=((['mp3','ogg','flac','wav'], soxi),)
+        #to ignore even if above 30kb
+        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf']
+        length=0
+        KILOBYTES=1024
+        SKIP_SIZE=30*KILOBYTES
+        has_unknowns=False
+        for f in os.walk(l_d_out):
+            fpath=f[0]
+            length_success=False
+            for read_method in exts_readable:
+                if ext_match(read_method[0], fpath):
+                    length_get=deepcopy(read_method[0])
+                    length_get.append(fpath)
+                    length += float(
+                        subprocess.check_output(length_get)
+                    )
+                    length_success=True
+                    break
+            
+            if length_success or \
+               ext_match(exts_ignore, fpath) or \
+               os.path.getsize(fpath) < SKIP_SIZE:
+                continue
+            length=None
+            Log.warn('couldnt get length of file: '+fpath+\
+                     ' skipping evaluation of this directory'+\
+                     ' based on length')
+            break
+        if length != None:
+           adb.one_off_update(
+               ('length', length),
+               'WHERE tmpId=?',
+               (self.data['tmpId'],)
+           )
+        self.data['length']=length
+        return length
         
-    @staticmethod
-    def _downloadFnames(l_d_out, fnames, getLength=False):
+    def _downloadFnames(self, adb, l_d_out, fnames):
         urls = []
         for fname in fnames:
             # we can use https in the below url,
             # but it makes most files go about 1/4 speed.        
             f_url='http://archive.org/download/{0}/{1}'
-            f_url=f_url.format(ident, fname)
+            f_url=f_url.format(self.data['ident'], fname)
             urls.append(f_url)
         if len(urls) == 0:
             return True
@@ -84,31 +132,35 @@ class Stub:
         if err_code != 0:
             util.Log.fatal('download error')
             #return False
-        #you're going to want to install unrar, p7zip, unzip
+        
         # sox, libsox-fmt-mp3
-        Stub._extractArchives(l_d_out, fnames)
-        Stub._getLength(l_d_out, fnames)
+        Stub._extractArchives(l_d_out, fnames)        
         
         return True
         
-    
-        
-    
-    @staticmethod
-    def _downloadTo(ident, scratchdir, l_d_out, quality):        
-        filedata_etree = _FetchInfo.as_etree(ident, _FetchInfo.METADATA)
+    def _downloadTo(self, adb, fq, scratchdir, l_d_out, quality):        
+        filedata_etree = _FetchInfo.as_etree(self.data['ident'],
+                                             _FetchInfo.METADATA)
         fnames=[]
         if quality == DOWNLOADED.ORIGINAL.value:
             for f in filedata_etree:
                 if f.get('source') == 'original':
                     fnames.append(f.get('name'))
-                Stub._downloadFnames(scratchdir+'/original', fnames)
+                orig_dir=scratchdir+'/original'
+                os.makedirs(orig_dir)
+                self._downloadFnames(adb, self.data['ident'],
+                                     orig_dir, fnames)
+                length=self._getLength(adb, orig_dir)
+                if not fq(self.data['size'], length):
+                    shutil.rmtree(orig_dir)
+                    return True
+                
         shutil.move(
             glob.glob(scratchdir+'/*'),
             l_d_out
         )
         
-    def write(self, arg_scratchdir, l_out=None):
+    def write(self, adb, fq, arg_scratchdir, l_out=None):
         #this system has FILESYSTEM lock,
         # but not OBJECT lock.
 
@@ -184,7 +236,8 @@ class Stub:
         if self.data['downloadLevel'] > towrite['downloadLevel']:
             try:
                 towrite['downloadLevel'] = Stub._downloadTo(
-                    ident,
+                    adb,
+                    fq,
                     scratchdir,
                     l,
                     self.data['downloadLevel']
