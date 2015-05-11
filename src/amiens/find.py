@@ -43,7 +43,7 @@ class Find(Subcmd):
             stub = Stub.FromDict(r)
             match=True
             for filt in mqs:
-                if not filt(stub):
+                if not filt['callback'](stub):
                     match=False
                     break
             if match:
@@ -72,8 +72,10 @@ class Find(Subcmd):
         # so that a placeholder for each is present
         # when we begin downloading in earnest.
         for stub in stublist:
-            stub.write(scratchdir,
-                       stub.path_from_rootdir(outdir))
+            stub.write(catalogue.adb,
+                       args['filter_fq'][0],
+                       scratchdir,
+                       l_out=stub.path_from_rootdir(outdir))
             
         if download:
             for stub in stublist:

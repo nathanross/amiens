@@ -18,9 +18,10 @@
 #!/bin/python3
 import defusedxml.ElementTree as etree
 
-def do_blacklist(m_etree, m_raw):
-    blacklist=['polka','ska']
-    corpus=m_raw
+def do_blacklist(stub):
+    blacklist=['polka','ska', 'talk', 'podcast']
+    corpus=stub.data['metadata']
+    #m_etree = etree.fromstring(stub.data['metadata'])
     #corpus=''
     #for keyword in ['title', 'subject', 'description']:
     #    el = m_etree.find(keyword)

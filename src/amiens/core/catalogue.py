@@ -49,7 +49,7 @@ class Catalogue:
             'reading metadata',
             l_json
         )
-        return json_data[ident]
+        return d_json[ident]
     
     def store_metadata(self, ident, xml):
         l_json = Catalogue.get_metadata_path(

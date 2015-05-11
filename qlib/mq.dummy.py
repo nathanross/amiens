@@ -17,7 +17,7 @@
 
 #!/bin/python3
 
-def dummy(etree, raw):
+def dummy(stub):
     return True
 
 callback=dummy

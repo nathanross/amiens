@@ -21,7 +21,11 @@ from amiens.core.enums import DOWNLOADED
 import subprocess
 import shutil
 import glob
+from copy import deepcopy
+import time
 import re
+import os
+from os import path
 
 class Stub:
     def __init__(self, tmp_id, ident, metadata,
@@ -101,7 +105,7 @@ class Stub:
             
             if length_success or \
                ext_match(exts_ignore, fpath) or \
-               os.path.getsize(fpath) < SKIP_SIZE:
+               path.getsize(fpath) < SKIP_SIZE:
                 continue
             length=None
             Log.warn('couldnt get length of file: '+fpath+\
@@ -223,7 +227,7 @@ class Stub:
         now=time.time()
 
         towrite['downloadLock'] = now
-        if (os.path.exists(l)):
+        if (path.exists(l)):
             old_stub=util.json_read(goal, l)            
             towrite['downloadLevel'] = old_stub['downloadLevel']
             if old_stub['downloadLevel'] >= self.data['downloadLevel'] or \
@@ -270,7 +274,7 @@ class Stub:
     
     def path_from_rootdir(self, outdir):
         #creates directory for stubfile and returns stub path
-        dest=outdir+'/'+self.data.ident
-        if not (os.access(dest, 0)):
+        dest=outdir+'/'+self.data['ident']
+        if not (path.exists(dest)):
             os.makedirs(dest)
         return dest+'/.amiens.json'
