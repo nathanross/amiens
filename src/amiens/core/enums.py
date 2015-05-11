@@ -18,6 +18,7 @@
 from enum import Enum, IntEnum
 
 class MTYPES(Enum):
+    PROBLEM=0
     AUDIO=1
     VIDEO=2
 

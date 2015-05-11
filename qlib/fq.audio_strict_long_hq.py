@@ -53,4 +53,4 @@ def audio_strict_long_hq(s, l):
 callback=audio_strict_long_hq
 
 # 192 / (8/1024.) * (20*60)
-sql='WHERE size > 29491200'
+sql='AND totalAudioSize > 29491200'

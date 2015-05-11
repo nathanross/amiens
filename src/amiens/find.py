@@ -17,6 +17,8 @@
 
 from amiens.core.subcmd import Subcmd
 from amiens.core import util
+from amiens.core.util import Log
+from amiens.core import enums
 from amiens.core.stub import Stub
 
 class Find(Subcmd):
@@ -24,12 +26,16 @@ class Find(Subcmd):
     def find(catalogue, fq, mqs=[], result_limit=1000, test_limit=100000):
         adb = catalogue.adb
         sql_filter_str='WHERE blockDownload =? AND hasMetadata=? {} LIMIT ?'
-        sql_filter_str=sql_filter_str.format(fq['sql'])        
+        sql_filter_str=sql_filter_str.format(fq['sql'])
+        Log.debug('sql:'+sql_filter_str)
         tmpresults=adb.one_off_select(
-            ('tmpId', 'ident', 'rating', 'comment', 'length'),
+            ('tmpId', 'ident', 'rating', 'comment', 'totalAudioLength', 'totalAudioSize'),
             sql_filter_str,
-            ( DOWNLOADED.NONE, test_limit)
+            ( enums.DOWNLOADED.NONE.value,
+              enums.METADATA_STATUS.STORED.value,
+              test_limit)
         )
+        Log.data(repr(tmpresults))
         results = []
         i=0
         for r in tmpresults:
@@ -55,8 +61,8 @@ class Find(Subcmd):
         download = args['download']
         quality = args['quality']
         
-        stublist = Find.find(adb,
-                             args['fq'],
+        stublist = Find.find(catalogue,
+                             args['filter_fq'][0],
                              args['mqs'],
 
                              args['result_limit'],
@@ -66,7 +72,8 @@ class Find(Subcmd):
         # so that a placeholder for each is present
         # when we begin downloading in earnest.
         for stub in stublist:
-            stub.write(scratchdir, stub.path_from_rootdir(outdir))
+            stub.write(scratchdir,
+                       stub.path_from_rootdir(outdir))
             
         if download:
             for stub in stublist:

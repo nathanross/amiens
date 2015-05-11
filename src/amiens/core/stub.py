@@ -25,18 +25,19 @@ import re
 
 class Stub:
     def __init__(self, tmp_id, ident, metadata,
-                 length=None,
+                 length=None, size=None,
                  download_level=DOWNLOADED.NONE.value,
                  download_lock=0, rating=None, comment=None):
         self.data={
-            tmpId: tmp_id,
-            ident: ident,
-            length: length,
-            metadata: metadata,
-            downloadLevel: download_level,
-            downloadLock : download_lock,
-            rating: rating,
-            comment: comment
+            'tmpId': tmp_id,
+            'ident': ident,
+            'totalAudioLength': length,
+            'totalAudioSize': size,
+            'metadata': metadata,
+            'downloadLevel': download_level,
+            'downloadLock' : download_lock,
+            'rating': rating,
+            'comment': comment
         }
         self.l_src=None
 
@@ -74,8 +75,8 @@ class Stub:
     # that they are not audio or video), we return a length of None
     # and make no change to the db
     def _getLength(adb, ident, l_d_out):
-        if self.data['length'] != None:
-            return (True, self.data['length'])
+        if self.data['totalAudioLength'] != None:
+            return (True, self.data['totalAudioLength'])
         read_soxi=['soxi', '-D']
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
         exts_readable=((['mp3','ogg','flac','wav'], soxi),)
@@ -109,11 +110,11 @@ class Stub:
             break
         if length != None:
            adb.one_off_update(
-               ('length', length),
+               ('totalAudioLength', length),
                'WHERE tmpId=?',
                (self.data['tmpId'],)
            )
-        self.data['length']=length
+        self.data['totalAudioLength']=length
         return length
         
     def _downloadFnames(self, adb, l_d_out, fnames):
@@ -151,7 +152,7 @@ class Stub:
                 self._downloadFnames(adb, self.data['ident'],
                                      orig_dir, fnames)
                 length=self._getLength(adb, orig_dir)
-                if not fq(self.data['size'], length):
+                if not fq(self.data['totalAudioSize'], length):
                     shutil.rmtree(orig_dir)
                     return True
                 
@@ -255,9 +256,13 @@ class Stub:
             d['downloadLevel']=0
         if not ('downloadLock' in d):
             d['downloadLock']=False
-        return cls(d.tmpId, d.ident,
-                   d.metadata, d.downloadLevel, d.downloadLock,
-                   d.rating, d.comment)
+        return cls(d['tmpId'], d['ident'],
+                   d['metadata'],
+                   d['totalAudioLength'],
+                   d['totalAudioSize'],
+                   d['downloadLevel'],
+                   d['downloadLock'],
+                   d['rating'], d['comment'])
     @classmethod
     def FromFile(cls, l_in):
         goal = "read item stub {}".format(l_in)
