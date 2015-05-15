@@ -251,16 +251,16 @@ class Stub:
             if self.l_src == None:
                 self.l_src=l_out
                 
-        goal = "write item stub {}".format(l)
 
         towrite = deepcopy(self.data)
 
         now=time.time()
         
         l_json=l+'/.amiens.json'
+        goal = "write item stub {}".format(l_json)
         towrite['downloadLock'] = now
         still_locked=False
-        if (path.exists(l)):
+        if (path.exists(l_json)):
             old_stub=util.json_read(goal, l_json)            
             towrite['downloadLevel'] = old_stub['downloadLevel']
 
