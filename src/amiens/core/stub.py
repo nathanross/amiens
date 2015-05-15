@@ -256,11 +256,12 @@ class Stub:
         towrite = deepcopy(self.data)
 
         now=time.time()
-
+        
+        l_json=l+'/.amiens.json'
         towrite['downloadLock'] = now
         still_locked=False
         if (path.exists(l)):
-            old_stub=util.json_read(goal, l)            
+            old_stub=util.json_read(goal, l_json)            
             towrite['downloadLevel'] = old_stub['downloadLevel']
 
             lower_quality=old_stub['downloadLevel'] >= self.data['downloadLevel']
@@ -274,7 +275,6 @@ class Stub:
             # lock.
             towrite['downloadLevel'] = 0
         
-        l_json=l+'/.amiens.json'
         util.json_write(goal, l_json, towrite)
 
         Log.force(repr(self.data['downloadLevel']))
