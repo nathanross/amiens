@@ -51,7 +51,7 @@ class Stub:
     @staticmethod
     def irrelevant_to_length(fname, fsize):
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
-        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf', 'xml', 'txt', 'doc', 'nfo', 'odt']
+        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf', 'xml', 'txt', 'doc', 'nfo', 'odt', 'torrent', 'sqlite']
         KILOBYTES=1024
         SKIP_SIZE=30*KILOBYTES
         return (ext_match(exts_ignore, fname) or \
