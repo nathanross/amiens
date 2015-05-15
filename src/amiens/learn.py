@@ -26,8 +26,12 @@ from amiens.core.amiensdb import ArliDb
 import defusedxml.ElementTree as etree
 import time
 from math import ceil
+import re
 
 class Learn(Subcmd):
+    RE_FLOAT=re.compile('^\d+(\.\d+)?$')
+    RE_M_S=re.compile('^(\d+):(\d\d?)$')
+    RE_H_M_S=re.compile('^(\d+):(\d\d?):(\d\d?)$')
     
     @staticmethod
     def _sum_filedata_totals(filedata_etree):
@@ -51,11 +55,28 @@ class Learn(Subcmd):
                 totals['size'] += fsize
                 
                 if not unknowable_length:
-                    if not (f.find('length') == None):
+                    if not (f.find('length') == None) and \
+                       not (f.find('length').text == ''):
                         if totals['length'] == None:
                             totals['length'] = 0
-                        totals['length'] += int(float(
-                            f.find('length').text))
+                        lengthval=f.find('length').text
+                        if re.match(Learn.RE_FLOAT, lengthval):
+                            # seconds
+                            totals['length'] += int(round(float(lengthval)))
+                        elif re.match(Learn.RE_M_S, lengthval):
+                            # minutes:seconds
+                            m, s = \
+                            [ int(x) for x in re.match(Learn.RE_M_S, lengthval).groups() ]
+                            totals['length'] += m*60 + s
+                        elif re.match(Learn.RE_H_M_S, lengthval):
+                            # hours:minutes:seconds
+                            h, m, s = \
+                             [ int(x) for x in re.match(Learn.RE_H_M_S, lengthval).groups() ]
+                            totals['length'] += h*3600 + m*60 + s
+                        else:
+                            Log.warn('couldnt successfully interpret length value <{}>'.format(val))
+                            unknowable_length = True
+                            totals['length'] = None
                     else:
                         unknowable_length = True
                         totals['length'] = None                    
