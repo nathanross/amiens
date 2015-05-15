@@ -41,4 +41,8 @@ class DOWNLOADED(IntEnum):
     ORIGINAL=3
     ALL=4
 
-
+class BLOCKDOWNLOAD(IntEnum):
+    NO=0
+    DOWNLOADED=1
+    NO_FILES=2
+    PREFERENCE=3

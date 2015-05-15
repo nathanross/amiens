@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from amiens.core import enums
 from amiens.core import util
 from amiens.core.fetchinfo import FetchInfo
 from amiens.core.util import Log
@@ -188,6 +189,11 @@ class Stub:
                 subdir,
                 l_d_out
             )
+        adb.one_off_update(
+            (('blockDownload', enums.BLOCKDOWNLOAD.DOWNLOADED.value),),
+            'WHERE tmpId=?',
+            (self.data['tmpId'],)
+        )           
         
     def write(self, adb, fq, arg_scratchdir, l_out=None):
         Log.outline('ident:'+self.data['ident'])
@@ -267,8 +273,9 @@ class Stub:
             # that a download is in progress is conveyed by the download
             # lock.
             towrite['downloadLevel'] = 0
-
-        util.json_write(goal, l, towrite)
+        
+        l_json=l+'/.amiens.json'
+        util.json_write(goal, l_json, towrite)
 
         Log.force(repr(self.data['downloadLevel']))
         Log.force(repr(towrite['downloadLevel']))
@@ -284,7 +291,7 @@ class Stub:
             )
         
         towrite['downloadLock'] = 0
-        util.json_write(goal, l, towrite)
+        util.json_write(goal, l_json, towrite)
     
             
     @classmethod
@@ -300,14 +307,18 @@ class Stub:
                    d['downloadLevel'],
                    d['downloadLock'],
                    d['rating'], d['comment'])
-    @classmethod
-    def FromFile(cls, l_in):
-        goal = "read item stub {}".format(l_in)
-        return Stub.FromDict(cls, json.loads(full_read(goal, l_in)))
     
+    def FromPath(cls, l_in):        
+        f_src=l_in
+        if (path.exists(l_in) and path.isdir(l_in)):
+            f_src=l_in.rstrip('/') + '/.amiens.json'
+        goal = "read item stub {}".format(f_src)
+        return Stub.FromDict(cls, json.loads(full_read(goal, f_src)))
+        
+        
     def path_from_rootdir(self, outdir):
         #creates directory for stubfile and returns stub path
         dest=outdir+'/'+self.data['ident']
         if not (path.exists(dest)):
             os.makedirs(dest)
-        return dest+'/.amiens.json'
+        return dest
