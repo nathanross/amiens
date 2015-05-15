@@ -30,6 +30,9 @@ def audio_strict_long_hq(s, l):
     if l == None:
         print('using default length')
         l = (1+min_minutes) * 60
+    if s == None:
+        #every media files < 30kb each. skip.
+        return False
     print('length:'+repr(l))    
     if l < (min_minutes * 60):
         #print('less than {}, skipping'.format(min_minutes*60))
