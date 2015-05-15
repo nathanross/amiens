@@ -159,6 +159,7 @@ class Log(object):
                                     '__init__.py file at its root')
                 pathstr='/'.join(patharr)
                 context_segment=''.join([
+                    str(level.value), '``',
                     pathstr,
                     ' @ ',
                     str(context['line_num']),

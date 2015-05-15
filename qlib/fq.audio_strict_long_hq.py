@@ -28,20 +28,20 @@ def audio_strict_long_hq(s, l):
     #if length < 20 min. skip.
     min_minutes = 20
     if l == None:
-        print('using default length')
+        print('fq`using default length')
         l = (1+min_minutes) * 60
     if s == None:
         #every media files < 30kb each. skip.
         return False
-    print('length:'+repr(l))    
+    print('fq`length:'+repr(l))    
     if l < (min_minutes * 60):
         #print('less than {}, skipping'.format(min_minutes*60))
         return False
 
-    print('size:'+repr(s))    
+    print('fq`size:'+repr(s))    
     bytes_per_second=(s/l)
     kbps=bytes_per_second*(8/1024.)
-    print('kbps:'+repr(kbps))    
+    print('fq`kbps:'+repr(kbps))    
     
     target_min_kbps=192
     # note that even when set to a cbr, there's going
@@ -49,7 +49,7 @@ def audio_strict_long_hq(s, l):
     # 0.96x-4 is an initial wild guess of a
     # generous lower bound.
     if kbps < ((target_min_kbps*0.96)-4):
-        print('skipping as is less than target {}'.format(((target_min_kbps*0.96)-4)))
+        print('fq`skipping as is less than target {}'.format(((target_min_kbps*0.96)-4)))
         return False
     return True
 
