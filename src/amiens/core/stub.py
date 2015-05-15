@@ -47,17 +47,14 @@ class Stub:
         }
         self.l_src=None
 
-
     @staticmethod
-    def irrelevant_to_length(fname, size):
+    def irrelevant_to_length(fname, fsize):
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
-        name=f_etree_node.get('name')
-        size=f_etree_node.find('size').text
-        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf']
+        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf', 'xml', 'txt', 'doc', 'nfo', 'odt']
         KILOBYTES=1024
         SKIP_SIZE=30*KILOBYTES
-        return (ext_match(exts_ignore, fpath) or \
-               path.getsize(fpath) < SKIP_SIZE)
+        return (ext_match(exts_ignore, fname) or \
+               fsize < SKIP_SIZE)
 
 
         

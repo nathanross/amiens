@@ -62,6 +62,6 @@ BYTE_PS_TO_KBPS=(8/1024.)
 sql='AND totalAudioSize > ' + \
     str((TARGET_KBPS/BYTE_PS_TO_KBPS)*(MIN_MINUTES*60)) + \
     ' AND ((totalAudioLength IS NULL) OR ((totalAudioLength > '+ \
-    MIN_MINUTES*60 + \
+    str(MIN_MINUTES*60) + \
     ') AND ((totalAudioSize/totalAudioLength)*' + \
-    BYTE_PS_TO_KBPS + ' >= ' + TARGET_KBPS + '))'
+    str(BYTE_PS_TO_KBPS) + ' >= ' + str(TARGET_KBPS) + '))'

@@ -18,6 +18,7 @@
 from amiens.core.subcmd import Subcmd
 from amiens.core import enums
 from amiens.core import util
+from amiens.core.stub import Stub
 from amiens.core.fetchinfo import FetchInfo
 from amiens.core.util import Log
 from amiens.core.amiensdb import ArliDb
@@ -38,10 +39,15 @@ class Learn(Subcmd):
         for f in filedata_etree:
             if f.get('source') == 'original':
                 fsize=0
-                #far as I know, every file has a size entry.
+                #far as I know, every file but the file xml has a size entry.
                 if totals['size'] == None:
                     totals['size'] = 0
-                fsize=int(float(f.find('size').text))
+                if (f.find('size') == None):
+                        continue
+                fsize=int(float(f.find('size').text))                
+                if Stub.irrelevant_to_length(
+                        f.get('name'), fsize):
+                    continue
                 totals['size'] += fsize
                 
                 if not unknowable_length:
@@ -50,8 +56,7 @@ class Learn(Subcmd):
                             totals['length'] = 0
                         totals['length'] += int(float(
                             f.find('length').text))
-                    elif not Stub.irrelevant_to_length(
-                        f.get('name'), fsize):
+                    else:
                         unknowable_length = True
                         totals['length'] = None                    
 
@@ -89,7 +94,7 @@ class Learn(Subcmd):
             # instead of (AND < enum val)
             items=ArliDb.quick_select(
                 c,
-                ('tmpId', 'ident', 'hasMetadata'),
+                ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
                 ('WHERE ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
                  'AND ((existsStatus IS NULL) OR (existsStatus < ?)) LIMIT 1000'),
                 (enums.EXISTS_STATUS.DELETED.value,))
@@ -146,7 +151,11 @@ class Learn(Subcmd):
                     #if it matches callbacks to keep it...
                     for i_mq in range(0, len(keep_m_mqs)):
                         mq = keep_m_mqs[i_mq]['callback']
-                        if not mq(metadata_etree, metadata_xml):
+                        item['metadata']=metadata_xml
+                        item['totalAudioSize']=totals['size']
+                        item['totalAudioLength']=totals['length']
+                        stub=Stub.FromDict(item)
+                        if not mq(stub):
                             print("NO MATCH on mq {}".format(i_mq))
                             matches = False
                             break                    
