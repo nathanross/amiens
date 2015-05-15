@@ -63,26 +63,35 @@ class Stub:
     @staticmethod
     def _extractArchives(l_d_out, fnames):
         archives=[]
+        Log.outline('called with l_d_out {}, fnames {}'.format(
+            l_d_out, repr(fnames)            
+        ))
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
-        for fname in fnames:            
+        for fname in fnames:
+            Log.force('testing if is archive:<'+fname+'>')
             if ext_match(['7z','tar\.gz','tgz','tar','zip','rar'],
                          fname):
+                Log.force('-- matches as archive --')
                 archives.append(fname)
         extract_dir=l_d_out
         for fname in archives:
             l_arch=l_d_out+'/'+fname
+            Log.force('what kind of archive is <'+fname+'>')
             if len(archives) > 1:
                 #don't truncate filename as may have multiple archives
                 # of same name but different ext
                 extract_dir=l_d_out+'/d_'+fname                
             if ext_match(['tgz','tar', 'tar\.gz'], fname):
-                subprocess.call(['tar', '-xf', fname, '-C', extract_dir])
+                cmd=['tar', '-xf', l_arch, '-C', extract_dir]
             elif ext_match(['7z'], fname):
-                subprocess.call(['7zr', 'x', '-o', extract_dir, fname])
+                Log.force('its 7zip')
+                cmd=['7zr', 'x', '-o'+extract_dir, l_arch]
             elif ext_match(['zip'], fname):
-                subprocess.call(['unzip', fname, '-d', extract_dir])
+                cmd=['unzip', l_arch, '-d', extract_dir]
             elif ext_match(['rar'], fname):
-                subprocess.call(['unrar', 'x', fname, extract_dir])
+                cmd=['unrar', 'x', l_arch, extract_dir]
+            Log.data('unarchive cmd is...<{}>'.format(' '.join(cmd)))
+            subprocess.call(cmd)
 
     # you're going to want to install
     #    sox libsox-fmt-mp3 mac flac avconv
