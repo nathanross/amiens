@@ -136,6 +136,8 @@ class Log(object):
 
     @staticmethod
     def log(level, message, trace_distance=0):
+        if type(message) != str:
+            Log.fatal('error, you must provide a string to log!')
         display_up_to=LogSeverity.LIKELY_ERROR
         if 'VERBOSE' in os.environ:
             display_up_to=int(os.environ['VERBOSE'])

@@ -64,4 +64,4 @@ sql='AND totalAudioSize > ' + \
     ' AND ((totalAudioLength IS NULL) OR ((totalAudioLength > '+ \
     str(MIN_MINUTES*60) + \
     ') AND ((totalAudioSize/totalAudioLength)*' + \
-    str(BYTE_PS_TO_KBPS) + ' >= ' + str(TARGET_KBPS) + '))'
+    str(BYTE_PS_TO_KBPS) + ' >= ' + str(TARGET_KBPS) + ')))'

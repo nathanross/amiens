@@ -123,16 +123,20 @@ class Stub:
                      ' based on length')
                 break
         if length != None:
-           adb.one_off_update(
-               (('totalAudioLength', length),),
-               'WHERE tmpId=?',
-               (self.data['tmpId'],)
-           )
-        Log.force(length)
+            length = int(round(length))
+            adb.one_off_update(
+                (('totalAudioLength', length),),
+                'WHERE tmpId=?',
+                (self.data['tmpId'],)
+            )           
+        Log.force(str(length))
         self.data['totalAudioLength']=length
         return length
         
     def _downloadFnames(self, adb, l_d_out, fnames):
+        Log.outline('called with l_d_out {}, fnames {}'.format(
+            l_d_out, repr(fnames)
+        ))
         urls = []
         for fname in fnames:
             # we can use https in the below url,
@@ -142,11 +146,12 @@ class Stub:
             urls.append(f_url)
         if len(urls) == 0:
             return True
-        wget_call=['wget', '-P ', l_d_out]
+        wget_call=['wget', '-P', l_d_out]
         wget_call.extend(urls)
+        Log.data(' '.join(wget_call))
         err_code=subprocess.call(wget_call)
         if err_code != 0:
-            util.Log.fatal('download error')
+            Log.warn('err_code:{}'.format(str(err_code)))
             #return False
         
         # sox, libsox-fmt-mp3
@@ -156,7 +161,7 @@ class Stub:
         
     def _downloadOrchestrator(self, adb, fq, scratchdir, l_d_out, quality):        
         filedata_etree = FetchInfo.as_etree(self.data['ident'],
-                                             FetchInfo.METADATA)        
+                                             FetchInfo.FILEDATA)        
         fnames=[]
         
         Log.outline(
@@ -165,22 +170,24 @@ class Stub:
         ))
         if quality == DOWNLOADED.ORIGINAL.value:
             for f in filedata_etree:
+                Log.force(repr(f))
                 if f.get('source') == 'original':
                     fnames.append(f.get('name'))
-                orig_dir=scratchdir+'/original'                
-                os.makedirs(orig_dir)
-                self._downloadFnames(adb,
-                                     orig_dir, fnames)
-                length=self._getLength(adb, orig_dir)
-                Log.force('length_final:'+repr(length))
-                if not fq['callback'](self.data['totalAudioSize'], length):
-                    shutil.rmtree(orig_dir)
-                    return True
-                
-        shutil.move(
-            glob.glob(scratchdir+'/*'),
-            l_d_out
-        )
+            orig_dir=scratchdir+'/original'                
+            os.makedirs(orig_dir)
+            self._downloadFnames(adb,
+                                 orig_dir, fnames)
+            length=self._getLength(adb, orig_dir)
+            Log.force('length_final:'+repr(length))
+            if not fq['callback'](self.data['totalAudioSize'], length):
+                shutil.rmtree(orig_dir)
+                return True
+
+        for subdir in glob.glob(scratchdir+'/*'):
+            shutil.move(
+                subdir,
+                l_d_out
+            )
         
     def write(self, adb, fq, arg_scratchdir, l_out=None):
         Log.outline('ident:'+self.data['ident'])
