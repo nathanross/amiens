@@ -52,5 +52,16 @@ def audio_strict_long_hq(s, l):
 
 callback=audio_strict_long_hq
 
-# 192 / (8/1024.) * (20*60)
-sql='AND totalAudioSize > 29491200'
+#chaneg these constants.
+GOAL_TARGET_KBPS=192.
+MIN_MINUTES=20
+
+TARGET_KBPS=((GOAL_TARGET_KBPS*0.96)-4)
+BYTE_PS_TO_KBPS=(8/1024.)
+
+sql='AND totalAudioSize > ' + \
+    str((TARGET_KBPS/BYTE_PS_TO_KBPS)*(MIN_MINUTES*60)) + \
+    ' AND ((totalAudioLength IS NULL) OR ((totalAudioLength > '+ \
+    MIN_MINUTES*60 + \
+    ') AND ((totalAudioSize/totalAudioLength)*' + \
+    BYTE_PS_TO_KBPS + ' >= ' + TARGET_KBPS + '))'

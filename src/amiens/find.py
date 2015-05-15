@@ -35,7 +35,6 @@ class Find(Subcmd):
               enums.METADATA_STATUS.STORED.value,
               test_limit)
         )
-        Log.data(repr(tmpresults))
         results = []
         i=0
         for r in tmpresults:
@@ -79,5 +78,8 @@ class Find(Subcmd):
             
         if download:
             for stub in stublist:
-                stub.data.downloadLevel=quality
-                stub.write(scratchdir)
+                stub.data['downloadLevel']=quality
+                stub.write(catalogue.adb,
+                           args['filter_fq'][0],
+                           scratchdir,
+                           l_out=stub.path_from_rootdir(outdir))

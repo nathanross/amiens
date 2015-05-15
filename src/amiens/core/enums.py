@@ -41,3 +41,4 @@ class DOWNLOADED(IntEnum):
     ORIGINAL=3
     ALL=4
 
+

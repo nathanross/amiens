@@ -34,17 +34,28 @@ class Learn(Subcmd):
             'length' : None, #seconds
             'size' : None #bytes
         }
+        unknowable_length=False
         for f in filedata_etree:
             if f.get('source') == 'original':
-                if f.find('length') is not None:
-                    if totals['length'] == None:
-                        totals['length'] = 0
-                    totals['length'] += int(float(f.find('length').text))
-                if f.find('size') is not None:
-                    if totals['size'] == None:
-                        totals['size'] = 0
-                    totals['size'] += int(float(f.find('size').text))
-        return totals        
+                fsize=0
+                #far as I know, every file has a size entry.
+                if totals['size'] == None:
+                    totals['size'] = 0
+                fsize=int(float(f.find('size').text))
+                totals['size'] += fsize
+                
+                if not unknowable_length:
+                    if not (f.find('length') == None):
+                        if totals['length'] == None:
+                            totals['length'] = 0
+                        totals['length'] += int(float(
+                            f.find('length').text))
+                    elif not Stub.irrelevant_to_length(
+                        f.get('name'), fsize):
+                        unknowable_length = True
+                        totals['length'] = None                    
+
+        return totals
         
     
     # filefilters here aren't meant so much for you know

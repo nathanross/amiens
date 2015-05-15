@@ -16,6 +16,8 @@
 #
 
 from amiens.core import util
+from amiens.core.fetchinfo import FetchInfo
+from amiens.core.util import Log
 from amiens.core.enums import DOWNLOADED
 
 import subprocess
@@ -45,6 +47,20 @@ class Stub:
         }
         self.l_src=None
 
+
+    @staticmethod
+    def irrelevant_to_length(fname, size):
+        ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
+        name=f_etree_node.get('name')
+        size=f_etree_node.find('size').text
+        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf']
+        KILOBYTES=1024
+        SKIP_SIZE=30*KILOBYTES
+        return (ext_match(exts_ignore, fpath) or \
+               path.getsize(fpath) < SKIP_SIZE)
+
+
+        
     #you're going to want to install unrar, p7zip, unzip
     @staticmethod
     def _extractArchives(l_d_out, fnames):
@@ -78,17 +94,14 @@ class Stub:
     # and we don't know how to read .xyz files (but are not sure
     # that they are not audio or video), we return a length of None
     # and make no change to the db
-    def _getLength(adb, ident, l_d_out):
+    def _getLength(self, adb, l_d_out):
         if self.data['totalAudioLength'] != None:
-            return (True, self.data['totalAudioLength'])
+            return self.data['totalAudioLength']
         read_soxi=['soxi', '-D']
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
-        exts_readable=((['mp3','ogg','flac','wav'], soxi),)
+        exts_readable=((['mp3','ogg','flac','wav'], read_soxi),)
         #to ignore even if above 30kb
-        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf']
         length=0
-        KILOBYTES=1024
-        SKIP_SIZE=30*KILOBYTES
         has_unknowns=False
         for f in os.walk(l_d_out):
             fpath=f[0]
@@ -97,27 +110,28 @@ class Stub:
                 if ext_match(read_method[0], fpath):
                     length_get=deepcopy(read_method[0])
                     length_get.append(fpath)
+                    Log.force('1:'+repr(length))
                     length += float(
                         subprocess.check_output(length_get)
                     )
+                    Log.force('2:'+repr(length))
                     length_success=True
                     break
             
-            if length_success or \
-               ext_match(exts_ignore, fpath) or \
-               path.getsize(fpath) < SKIP_SIZE:
-                continue
-            length=None
-            Log.warn('couldnt get length of file: '+fpath+\
+            if not (length_success or \
+               Stub.irrelevant_to_length(fpath, path.getsize(fpath))):
+                length=None
+                Log.warn('couldnt get length of file: '+fpath+\
                      ' skipping evaluation of this directory'+\
                      ' based on length')
-            break
+                break
         if length != None:
            adb.one_off_update(
-               ('totalAudioLength', length),
+               (('totalAudioLength', length),),
                'WHERE tmpId=?',
                (self.data['tmpId'],)
            )
+        Log.force(length)
         self.data['totalAudioLength']=length
         return length
         
@@ -143,20 +157,26 @@ class Stub:
         
         return True
         
-    def _downloadTo(self, adb, fq, scratchdir, l_d_out, quality):        
-        filedata_etree = _FetchInfo.as_etree(self.data['ident'],
-                                             _FetchInfo.METADATA)
+    def _downloadOrchestrator(self, adb, fq, scratchdir, l_d_out, quality):        
+        filedata_etree = FetchInfo.as_etree(self.data['ident'],
+                                             FetchInfo.METADATA)        
         fnames=[]
+        
+        Log.outline(
+            'called w/ scratchdir: {}, l_d_out: {}, quality: {}'.format(
+            scratchdir, l_d_out, repr(quality)
+        ))
         if quality == DOWNLOADED.ORIGINAL.value:
             for f in filedata_etree:
                 if f.get('source') == 'original':
                     fnames.append(f.get('name'))
-                orig_dir=scratchdir+'/original'
+                orig_dir=scratchdir+'/original'                
                 os.makedirs(orig_dir)
-                self._downloadFnames(adb, self.data['ident'],
+                self._downloadFnames(adb,
                                      orig_dir, fnames)
                 length=self._getLength(adb, orig_dir)
-                if not fq(self.data['totalAudioSize'], length):
+                Log.force('length_final:'+repr(length))
+                if not fq['callback'](self.data['totalAudioSize'], length):
                     shutil.rmtree(orig_dir)
                     return True
                 
@@ -166,6 +186,7 @@ class Stub:
         )
         
     def write(self, adb, fq, arg_scratchdir, l_out=None):
+        Log.outline('ident:'+self.data['ident'])
         #this system has FILESYSTEM lock,
         # but not OBJECT lock.
 
@@ -227,28 +248,36 @@ class Stub:
         now=time.time()
 
         towrite['downloadLock'] = now
+        still_locked=False
         if (path.exists(l)):
             old_stub=util.json_read(goal, l)            
             towrite['downloadLevel'] = old_stub['downloadLevel']
-            if old_stub['downloadLevel'] >= self.data['downloadLevel'] or \
-            ((old_stub['downloadLock'] + 60*60*24) > now) :
+
+            lower_quality=old_stub['downloadLevel'] >= self.data['downloadLevel']
+            still_locked=((old_stub['downloadLock'] + 60*60*24) > now)
+            if lower_quality or still_locked:
                 towrite['downloadLock'] = old_stub['downloadLock']
         else:
+            # downloadLevel in the stub file should only be the COMPLETED
+            # downloadfile, and not reflect any download in progress
+            # that a download is in progress is conveyed by the download
+            # lock.
             towrite['downloadLevel'] = 0
 
         util.json_write(goal, l, towrite)
-        
-        if self.data['downloadLevel'] > towrite['downloadLevel']:
-            try:
-                towrite['downloadLevel'] = Stub._downloadTo(
-                    adb,
-                    fq,
-                    scratchdir,
-                    l,
-                    self.data['downloadLevel']
-                )
-            except:
-                pass
+
+        Log.force(repr(self.data['downloadLevel']))
+        Log.force(repr(towrite['downloadLevel']))
+        if self.data['downloadLevel'] > towrite['downloadLevel'] and \
+           not still_locked:
+            Log.outline('trying to download')
+            towrite['downloadLevel'] = self._downloadOrchestrator(
+                adb=adb,
+                fq=fq,
+                scratchdir=scratchdir,
+                l_d_out=l,
+                quality=self.data['downloadLevel']
+            )
         
         towrite['downloadLock'] = 0
         util.json_write(goal, l, towrite)

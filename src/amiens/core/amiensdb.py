@@ -35,7 +35,8 @@ class ArliDb():
                               colvalpairs, query_filter, data)
         self.conn.commit()
 
-    def one_off_select(self, cols, query_filter='', data=[], return_raw=False):
+    def one_off_select(self, cols, query_filter='',
+                       data=[], return_raw=False):
         return ArliDb.quick_select(self.conn.cursor(),
                                    cols, query_filter, data, return_raw)
 
