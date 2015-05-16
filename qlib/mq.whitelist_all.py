@@ -17,8 +17,8 @@
 
 import defusedxml.ElementTree as etree
 
-def do_whitelist(stub):
-    whitelist=['s3']
+def do_whitelist_all(stub):
+    whitelist=['classical', 'violin']
     corpus=stub.data['metadata']
     #m_etree = etree.fromstring(stub.data['metadata'])
     #corpus=''
@@ -28,8 +28,9 @@ def do_whitelist(stub):
     #        corpus += ' ' + el.text
     if corpus:
         for term in whitelist:
-            if term in corpus:
-                return True
+            if not (term in corpus):
+                return False
+        return True
     return False
 
-callback=do_whitelist
+callback=do_whitelist_all
