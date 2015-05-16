@@ -51,7 +51,14 @@ class Stub:
     @staticmethod
     def irrelevant_to_length(fname, fsize):
         ext_match=lambda x,y:re.match('.*\.('+'|'.join(x)+')$', y)
-        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf', 'xml', 'txt', 'doc', 'nfo', 'odt', 'torrent', 'sqlite']
+        # files that are definitely not audio or video,
+        # but may commonly be of > ~30kb size and accompany
+        # music items. It is important to know to ignore these,
+        # because otherwise an item where all the music files
+        # have known lengths could become an item with total
+        # length not-automatically-knowable if it didn't know
+        # this jpg, doc, etc was not an audio or video file.
+        exts_ignore=['jpg', 'png', 'bmp', 'gif', 'pdf', 'xml', 'txt', 'doc', 'odt', 'sqlite']
         KILOBYTES=1024
         SKIP_SIZE=30*KILOBYTES
         return (ext_match(exts_ignore, fname) or \
