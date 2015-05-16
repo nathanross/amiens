@@ -39,17 +39,29 @@ def full_read(goal, l):
     f.close()
     return d
 
+def full_read_utf8(goal, l):
+    f=debug_open(goal, l, 'rb')
+    d=f.read().decode('utf8')
+    f.close()
+    return d
+
 def full_write(goal, l, d):
     f=debug_open(goal, l, 'w')
     f.write(d)
     f.flush()
     f.close()
 
+def full_write_utf8(goal, l, d):
+    f=debug_open(goal, l, 'wb')
+    f.write(d.encode('utf8'))
+    f.flush()
+    f.close()
+
 def json_read(goal, l):
-    return json.loads(full_read(goal, l))
+    return json.loads(full_read_utf8(goal, l))
 
 def json_write(goal, l, d):
-    full_write(goal, l, json.dumps(d))
+    full_write_utf8(goal, l, json.dumps(d, ensure_ascii=False))
 
 
 def indent(elem, level=0):

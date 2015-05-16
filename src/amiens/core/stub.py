@@ -92,13 +92,15 @@ class Stub:
                 cmd=['tar', '-xf', l_arch, '-C', extract_dir]
             elif ext_match(['7z'], fname):
                 Log.force('its 7zip')
-                cmd=['7zr', 'x', '-o'+extract_dir, l_arch]
+                cmd=['7zr', 'x', '-o'+extract_dir, l_arch] 
             elif ext_match(['zip'], fname):
-                cmd=['unzip', l_arch, '-d', extract_dir]
+                cmd=['unzip', l_arch, '-d', extract_dir] #tested.
             elif ext_match(['rar'], fname):
                 cmd=['unrar', 'x', l_arch, extract_dir]
             Log.data('unarchive cmd is...<{}>'.format(' '.join(cmd)))
             subprocess.call(cmd)
+            if path.exists(l_arch):
+                os.remove(l_arch)
 
     # you're going to want to install
     #    sox libsox-fmt-mp3 mac flac avconv
@@ -109,6 +111,9 @@ class Stub:
     # that they are not audio or video), we return a length of None
     # and make no change to the db
     def _getLength(self, adb, l_d_out):
+        Log.outline('called with l_d_out of {}, also self.data.totalAudiolength is {}'.format(
+            l_d_out, repr(self.data['totalAudioLength'])
+        ))
         if self.data['totalAudioLength'] != None:
             return self.data['totalAudioLength']
         read_soxi=['soxi', '-D']
@@ -117,28 +122,36 @@ class Stub:
         #to ignore even if above 30kb
         length=0
         has_unknowns=False
-        for f in os.walk(l_d_out):
-            fpath=f[0]
-            length_success=False
-            for read_method in exts_readable:
-                if ext_match(read_method[0], fpath):
-                    length_get=deepcopy(read_method[0])
-                    length_get.append(fpath)
-                    Log.force('1:'+repr(length))
-                    length += float(
-                        subprocess.check_output(length_get)
-                    )
-                    Log.force('2:'+repr(length))
-                    length_success=True
+
+        for d in os.walk(l_d_out):
+            path_d=d[0]
+            for f in d[2]:
+                fpath=path_d + '/' + f
+                Log.data('checking length of file {}'.format(fpath))
+                length_success=False
+                if Stub.irrelevant_to_length(fpath, path.getsize(fpath)):
+                    continue
+
+                for read_method in exts_readable:
+                    if ext_match(read_method[0], fpath):
+                        length_get=deepcopy(read_method[1])
+                        length_get.append(fpath)
+                        Log.force('total length before calling read method:'+repr(length))
+                        length += float(
+                            subprocess.check_output(length_get)
+                        )
+                        Log.force('total length AFTER calling read method:'+repr(length))
+                        length_success=True
+                        break
+
+                if not (length_success):
+                    length=None
+                    Log.warning('couldnt get length of file: '+fpath+\
+                         ' skipping evaluation of this directory'+\
+                         ' based on length')
                     break
-            
-            if not (length_success or \
-               Stub.irrelevant_to_length(fpath, path.getsize(fpath))):
-                length=None
-                Log.warn('couldnt get length of file: '+fpath+\
-                     ' skipping evaluation of this directory'+\
-                     ' based on length')
-                break
+            if not length_success:
+                break        
         if length != None:
             length = int(round(length))
             adb.one_off_update(
@@ -168,7 +181,7 @@ class Stub:
         Log.data(' '.join(wget_call))
         err_code=subprocess.call(wget_call)
         if err_code != 0:
-            Log.warn('err_code:{}'.format(str(err_code)))
+            Log.warning('err_code:{}'.format(str(err_code)))
             #return False
         
         # sox, libsox-fmt-mp3

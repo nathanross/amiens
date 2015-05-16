@@ -74,7 +74,7 @@ class Learn(Subcmd):
                              [ int(x) for x in re.match(Learn.RE_H_M_S, lengthval).groups() ]
                             totals['length'] += h*3600 + m*60 + s
                         else:
-                            Log.warn('couldnt successfully interpret length value <{}>'.format(val))
+                            Log.warning('couldnt successfully interpret length value <{}>'.format(val))
                             unknowable_length = True
                             totals['length'] = None
                     else:
