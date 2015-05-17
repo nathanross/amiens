@@ -79,11 +79,19 @@ class Transforms(object):
             arglist=[arg]
         for l_mq in arglist:
             receiver={'callback':None}
+            reverse=False
+            if l_mq[0] == '^':
+                reverse=True
+                l_mq=l_mq[1:]
             mq_text=util.full_read(goal, path.expanduser(l_mq))
             exec(mq_text, {}, receiver)
             asserts.that(receiver['callback'],
                     'no callback assigned for mq:' + l_mq)
-            tq={'callback':receiver['callback'], 'sql':None}
+            if reverse:
+                callback=lambda x: not receiver['callback'](x)
+            else:
+                callback=receiver['callback']            
+            tq={'callback':callback, 'sql':None}
             if 'sql' in receiver:
                 tq['sql'] = receiver['sql']
             callbacks.append(tq)
@@ -122,6 +130,20 @@ class Transforms(object):
     @staticmethod
     def rating(arg):
         goal='received rating argument'
-        asserts.that(arg <= 5, goal+' but it is higher than the maximum 5')
-        asserts.that(arg >= 0, goal+' but it is lower than the minimum 0')
-        return arg
+        val=None
+        if rating=='sm':
+            val=enums.RATING.MANUAL_SKIP.value
+        elif rating=='sflt': #filter skipped
+            val=enums.RATING.SKIPPED.value
+        elif rating=='none': #no rating
+            val=enums.RATING.UNRATED.value
+        elif rating=='csflt': #made avail for debug - confirm filter skipped
+            val=enums.RATING.CONFIRM_SKIPPED.value
+        elif rating=='cnone': #made avail for debug - confirm no rating.
+            val=enums.RATING.CONFIRM_UNRATED.value
+        elif rating in [ str(x) for x in range(1,6)]:
+            val=enums.RATING.TOSS.value+(int(rating)-1)
+        else:
+           Log.fatal('could not intrepret rating value {}'.format(rating))
+            
+        return val

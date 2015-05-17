@@ -46,3 +46,19 @@ class BLOCKDOWNLOAD(IntEnum):
     DOWNLOADED=1
     NO_FILES=2
     PREFERENCE=3
+
+class RATING(IntEnum):
+    UNRATED=0
+    SKIPPED=1
+    CONFIRM_UNRATED=2
+    CONFIRM_SKIPPED=3
+    MANUAL_SKIP=4
+    #is it really necessary to define the number of stars
+    # maybe just have 4 as a baseline and leave the semantics
+    # up to the user.
+    TOSS=5
+    BAD=6
+    DEF_OKAY=7
+    OKAY=8
+    GOOD=9 
+    

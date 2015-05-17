@@ -94,7 +94,7 @@ class ArliDb():
         conn = sqlite3.connect(l_db)
         c = conn.cursor()
         c.execute('''CREATE TABLE items
-        (tmpId INTEGER PRIMARY KEY AUTOINCREMENT, ident TEXT, mediaType INTEGER NOT NULL DEFAULT 0, existsStatus INTEGER NOT NULL DEFAULT 0, totalAudioLength INTEGER, totalAudioSize INTEGER, checkedOnUnixDate INTEGER, hasMetadata INTEGER NOT NULL DEFAULT 0, metadata TEXT, blockDownload INTEGER NOT NULL DEFAULT 0, rating INTEGER, comment TEXT)''')
+        (tmpId INTEGER PRIMARY KEY AUTOINCREMENT, ident TEXT, mediaType INTEGER NOT NULL DEFAULT 0, existsStatus INTEGER NOT NULL DEFAULT 0, totalAudioLength INTEGER, totalAudioSize INTEGER, checkedOnUnixDate INTEGER, hasMetadata INTEGER NOT NULL DEFAULT 0, metadata TEXT, blockDownload INTEGER NOT NULL DEFAULT 0, rating INTEGER NOT NULL DEFAULT 0, comment TEXT)''')
         conn.commit()
         conn.close()
         return cls(l_db)

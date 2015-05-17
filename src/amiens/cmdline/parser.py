@@ -196,8 +196,8 @@ def parse(args_orig):
                      nargs='?', type=str, default=None,
                      help="get or set text comment for item"),
                 _Arg(ext='rating', short='-r',
-                     nargs='?', type=int, default=None,
-                     help=('rate from 0-4.'),
+                     nargs='?', type=str, default=None,
+                     help=('rate from 1-5'),
                      transform=Transforms.rating),
             ],
             callback = review.Review.cmd

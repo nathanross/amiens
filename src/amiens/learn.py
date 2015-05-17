@@ -117,8 +117,9 @@ class Learn(Subcmd):
                 c,
                 ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
                 ('WHERE ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
-                 'AND ((existsStatus IS NULL) OR (existsStatus < ?)) LIMIT 1000'),
-                (enums.EXISTS_STATUS.DELETED.value,))
+                 'AND ((existsStatus IS NULL) OR (existsStatus < ?)) LIMIT 1000'
+                 'AND rating = ?'),
+                (enums.EXISTS_STATUS.DELETED.value, enums.RATING.UNRATED.value))
             if len(items) == 0:
                 Log.fatal('couldnt find any candidates for learning, please get some idents.')
             
@@ -152,7 +153,8 @@ class Learn(Subcmd):
                 has_metadata = item['hasMetadata']
                 if has_metadata == None:
                     has_metadata=enums.METADATA_STATUS.NONE.value
-                
+
+                rating = enums.RATING.UNRATED.value
                 #if we don't have the metadata, and aggregate media data
                 # indicates to keep it...
                 if (has_metadata == \
@@ -188,6 +190,10 @@ class Learn(Subcmd):
                         has_metadata = enums.METADATA_STATUS.STORED.value
                     #else if block_non_match:
                     #    has_metadata = METADATA_STATUS.BLOCKED
+                    else:
+
+                        rating = enums.RATING.SKIPPED.value
+                        
                 
                 # update aggregate data, last checked date,
                 # and status of existence and status of
@@ -195,6 +201,7 @@ class Learn(Subcmd):
                 updates = (('totalAudioLength', totals['length']),
                            ('totalAudioSize', totals['size']),
                            ('checkedOnUnixDate', now),
+                           ('rating', rating),
                            ('hasMetadata', has_metadata),
                            ('existsStatus',
                             enums.EXISTS_STATUS.EXISTS.value))
