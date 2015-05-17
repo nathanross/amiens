@@ -146,7 +146,7 @@ class Learn(Subcmd):
                 enums.RATING.CONFIRM_UNRATED.value))
             if len(items) == 0:
                 Log.fatal('couldnt find any candidates for learning, please get some idents.')
-            
+            metadata_storage_queue=[]
             for item in items:
                 Log.data('updating item {}'.format(item['tmpId']))
                 now = int(time.time())
@@ -211,7 +211,9 @@ class Learn(Subcmd):
                         debug_stats['passed mqs'] +=1
                         Log.debug('keep_m_mqs all matched. writing xml to disk')
                         #store it so its usable by find()
-                        catalogue.store_metadata(item['ident'], metadata_xml)
+                        #we can handle the amount of ram, given that we won't
+                        # be storing more than 1k at a time at any point.
+                        metadata_storage_queue.append((item['ident'], metadata_xml))
                         has_metadata = enums.METADATA_STATUS.STORED.value
                     #else if block_non_match:
                     #    has_metadata = METADATA_STATUS.BLOCKED
@@ -233,9 +235,11 @@ class Learn(Subcmd):
                 ArliDb.quick_update(c,
                                     updates,
                                     'WHERE tmpId=?', (item['tmpId'],))
-            
-            
+
             adb.conn.commit()
+            for metadata_pair in metadata_storage_queue:
+                catalogue.store_metadata(*metadata_pair)
+            metadata_storage_queue=[]
         for counter in debug_counters:
             Log.outline(counter + ':' + str(debug_stats[counter]))
     @staticmethod
