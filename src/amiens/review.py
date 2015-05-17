@@ -16,12 +16,14 @@
 #
 
 from amiens.core.subcmd import Subcmd
+from amiens.core.util import Log
+from amiens.core import enums
 
 class Review(Subcmd):
 
     @staticmethod
     def cmd(args):
-        adb = args['db_path']
+        adb = args['catalogue_path'].adb
         item = args['item']
         for key in ('rating', 'comment'):
             if args[key] == None:
@@ -32,6 +34,12 @@ class Review(Subcmd):
             item.data[key] = val
             adb.one_off_update(((key, val),),
                                'WHERE tmpId=?',
-                               (item.data.tmpId,))
-            
-            item.write()
+                               (item.data['tmpId'],))            
+            item.write(adb, None, None)
+        tmpresult=adb.one_off_select(
+            ('comment', 'rating'),
+            'WHERE tmpId=?',
+            (item.data['tmpId'],))[0]
+        Log.writes('comment:'+repr(tmpresult['comment']))
+        Log.writes('rating:'+\
+                   list(enums.RATING.__members__)[tmpresult['rating']])

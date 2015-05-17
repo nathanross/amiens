@@ -18,6 +18,7 @@
 from amiens.core import enums
 from amiens.core import asserts
 from amiens.core import util
+from amiens.core.stub import Stub
 from amiens.core.catalogue import Catalogue
 import os
 from os import path
@@ -102,10 +103,10 @@ class Transforms(object):
         goal='received item argument'
         arg=path.expanduser(path_posix)
         asserts.exists(goal, arg)
-        l=arg
+        l=arg.rstrip('/')
         if path.isdir(goal):
             l+='/.amiens.json'
-        stub = _Stub.FromFile(l)
+        stub = Stub.FromPath(l)
         stub.l_src=l
         return stub
     
@@ -131,19 +132,19 @@ class Transforms(object):
     def rating(arg):
         goal='received rating argument'
         val=None
-        if rating=='sm':
+        if arg=='sm':
             val=enums.RATING.MANUAL_SKIP.value
-        elif rating=='sflt': #filter skipped
+        elif arg=='sflt': #filter skipped
             val=enums.RATING.SKIPPED.value
-        elif rating=='none': #no rating
+        elif arg=='none': #no rating
             val=enums.RATING.UNRATED.value
-        elif rating=='csflt': #made avail for debug - confirm filter skipped
+        elif arg=='csflt': #made avail for debug - confirm filter skipped
             val=enums.RATING.CONFIRM_SKIPPED.value
-        elif rating=='cnone': #made avail for debug - confirm no rating.
+        elif arg=='cnone': #made avail for debug - confirm no rating.
             val=enums.RATING.CONFIRM_UNRATED.value
-        elif rating in [ str(x) for x in range(1,6)]:
-            val=enums.RATING.TOSS.value+(int(rating)-1)
-        else:
-           Log.fatal('could not intrepret rating value {}'.format(rating))
+        elif arg in [ str(x) for x in range(1,6)]:
+            val=enums.RATING.TOSS.value+(int(arg)-1)
+        elif arg != None:
+           Log.fatal('could not intrepret rating value {}'.format(arg))
             
         return val

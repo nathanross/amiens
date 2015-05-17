@@ -268,7 +268,7 @@ class Stub:
         #     the second option is probably the best, but a bit complicated.
         #     i think if we are not going to do it right, let's just keep
         #     it simple until we do.
-        scratchdir=arg_scratchdir.rstrip('/')
+
         
         l=''        
         if l_out == None:
@@ -310,6 +310,7 @@ class Stub:
         Log.force(repr(towrite['downloadLevel']))
         if self.data['downloadLevel'] > towrite['downloadLevel'] and \
            not still_locked:
+            scratchdir=arg_scratchdir.rstrip('/')
             Log.outline('trying to download')
             towrite['downloadLevel'] = self._downloadOrchestrator(
                 adb=adb,
@@ -337,12 +338,13 @@ class Stub:
                    d['downloadLock'],
                    d['rating'], d['comment'])
     
+    @classmethod
     def FromPath(cls, l_in):        
         f_src=l_in
         if (path.exists(l_in) and path.isdir(l_in)):
             f_src=l_in.rstrip('/') + '/.amiens.json'
         goal = "read item stub {}".format(f_src)
-        return Stub.FromDict(cls, json.loads(full_read(goal, f_src)))
+        return Stub.FromDict(util.json_read(goal, f_src))
         
         
     def path_from_rootdir(self, outdir):

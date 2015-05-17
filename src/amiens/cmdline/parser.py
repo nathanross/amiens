@@ -192,7 +192,7 @@ def parse(args_orig):
             arguments = [
                 args['catalogue_path'],
                 args['item'],
-                _Arg(ext='comment', short='-c',
+                _Arg(ext='comment', short='-t',
                      nargs='?', type=str, default=None,
                      help="get or set text comment for item"),
                 _Arg(ext='rating', short='-r',
