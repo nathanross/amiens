@@ -27,6 +27,7 @@ import defusedxml.ElementTree as etree
 import time
 from math import ceil
 import re
+import random
 
 class Learn(Subcmd):
     RE_FLOAT=re.compile('^\d+(\.\d+)?$')
@@ -101,11 +102,27 @@ class Learn(Subcmd):
             'passed fq',
             'passed mqs']
         debug_stats = {}
+
+        c = adb.conn.cursor()
+        c.execute('select count(*) from items')
+        total_idents=c.fetchall()[0][0]
+        c.close()
+        # the goal is to draw a sample that is relatively equally
+        # spaced over the age of idents within a single learn session,
+        # and over hundreds of learn sessions eventually forms a uniform
+        # distribution.
+        # the spacing is important so that we're searching over a variety
+        # of items from different times. The random initial offset is
+        # important so that the spacing-restricted select (rather than
+        # selecting over all idents) does not lead us to end up
+        # checking the same restricted set of 2000 idents over and over again.
+        step_size=int(total_idents/1000) #truncates
+        
         for counter in debug_counters:
             debug_stats[counter] = 0
         while (now - start_unixtime) < minutes*60 :
             now = int(time.time())
-            
+            offset=random.randint(0, step_size-1) #randint is inclusive on both ends.
             c = adb.conn.cursor()            
             # for now, just only look at idents
             # we've never looked at before.
@@ -116,19 +133,27 @@ class Learn(Subcmd):
             items=ArliDb.quick_select(
                 c,
                 ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
-                ('WHERE ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
-                 'AND ((existsStatus IS NULL) OR (existsStatus < ?)) LIMIT 1000'
-                 'AND rating = ?'),
-                (enums.EXISTS_STATUS.DELETED.value, enums.RATING.UNRATED.value))
+                ('WHERE ((tmpId+{}) % {} = 0) '
+                 'AND ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
+                 'AND ((existsStatus IS NULL) OR (existsStatus < ?)) '
+                 'AND (rating = ? OR rating = ?) LIMIT 1000').format(offset, step_size),
+                # we don't filter by has metadata, because we reserve
+                # the right for the learn process to not necessarily update
+                # metadata, so not having metadata isn't an indicator
+                # of priority to be checked.
+                (enums.EXISTS_STATUS.DELETED.value,
+                enums.RATING.UNRATED.value,
+                enums.RATING.CONFIRM_UNRATED.value))
             if len(items) == 0:
                 Log.fatal('couldnt find any candidates for learning, please get some idents.')
             
             for item in items:
+                Log.data('updating item {}'.format(item['tmpId']))
                 now = int(time.time())
                 debug_stats['checked'] += 1
                 if not ((now - start_unixtime) < minutes*60):
                     break
-
+                
                 #parse file data
                 filedata_etree = FetchInfo.as_etree(
                     item['ident'], FetchInfo.FILEDATA)
@@ -143,7 +168,7 @@ class Learn(Subcmd):
                         ),
                         'WHERE tmpId=?', (item['tmpId'],))
                     continue
-
+                
                 debug_stats['still exist'] += 1
                 
                 #otherwise get aggregate media data only available
@@ -153,7 +178,7 @@ class Learn(Subcmd):
                 has_metadata = item['hasMetadata']
                 if has_metadata == None:
                     has_metadata=enums.METADATA_STATUS.NONE.value
-
+                
                 rating = enums.RATING.UNRATED.value
                 #if we don't have the metadata, and aggregate media data
                 # indicates to keep it...
