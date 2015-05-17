@@ -100,7 +100,19 @@ class Learn(Subcmd):
             'checked',
             'still exist',
             'passed fq',
-            'passed mqs']
+            'passed mqs',
+            't_fetch_fxml',
+            't_parse_fxml',
+            't_fetch_mxml',
+            't_parse_mxml',
+            't_get_totals',
+            't_fq',
+            't_mq',
+            't_update_exists',
+            't_select'
+        ]
+        tn = lambda : time.time()
+        tdiff = lambda z: (time.time()) - z
         debug_stats = {}
 
         c = adb.conn.cursor()
@@ -130,6 +142,7 @@ class Learn(Subcmd):
             # not likely, we can change this code.
             # todo (AND NOT = exists_status enumval)
             # instead of (AND < enum val)
+            st=tn()
             items=ArliDb.quick_select(
                 c,
                 ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
@@ -144,6 +157,7 @@ class Learn(Subcmd):
                 (enums.EXISTS_STATUS.DELETED.value,
                 enums.RATING.UNRATED.value,
                 enums.RATING.CONFIRM_UNRATED.value))
+            debug_stats['t_select']+=tdiff(st)
             if len(items) == 0:
                 Log.fatal('couldnt find any candidates for learning, please get some idents.')
             metadata_storage_queue=[]
@@ -155,8 +169,17 @@ class Learn(Subcmd):
                     break
                 
                 #parse file data
-                filedata_etree = FetchInfo.as_etree(
-                    item['ident'], FetchInfo.FILEDATA)
+                #filedata_etree = FetchInfo.as_etree(
+                #    item['ident'], FetchInfo.FILEDATA)
+                st=tn()
+                filedata_xml = FetchInfo.as_str(item['ident'],
+                                                FetchInfo.FILEDATA)
+                debug_stats['t_fetch_fxml']+=tdiff(st)
+                st=tn()
+                filedata_etree = etree.fromstring(filedata_xml)
+                debug_stats['t_parse_fxml']+=tdiff(st)
+
+                
                 Log.debug(etree.tostring(filedata_etree).decode())
                 #if none found, mark it as nonexistent in the database.
                 if not filedata_etree:
@@ -173,8 +196,10 @@ class Learn(Subcmd):
                 
                 #otherwise get aggregate media data only available
                 #in filedata.
+                st=tn()
                 totals = Learn._sum_filedata_totals(filedata_etree)
-                
+                debug_stats['t_get_totals']+=tdiff(st)
+                            
                 has_metadata = item['hasMetadata']
                 if has_metadata == None:
                     has_metadata=enums.METADATA_STATUS.NONE.value
@@ -182,16 +207,21 @@ class Learn(Subcmd):
                 rating = enums.RATING.UNRATED.value
                 #if we don't have the metadata, and aggregate media data
                 # indicates to keep it...
+                st=tn()
                 if (has_metadata == \
                    enums.METADATA_STATUS.NONE.value) and \
                    fetch_m_fq[0]['callback'](totals['size'], totals['length']):
                     debug_stats['passed fq'] += 1
-                    
+                    debug_stats['t_fq']+=tdiff(st)
                     Log.debug('passed fq, retrieving metadata')
                     #download the metadata
+                    st=tn()
                     metadata_xml = FetchInfo.as_str(item['ident'],
                                                     FetchInfo.METADATA)
+                    debug_stats['t_fetch_mxml']+=tdiff(st)
+                    st=tn()
                     metadata_etree = etree.fromstring(metadata_xml)
+                    debug_stats['t_parse_mxml']+=tdiff(st)
                     Log.debug('metadata_etree')
                     Log.debug(etree.tostring(metadata_etree).decode())
                     matches = True
@@ -203,7 +233,9 @@ class Learn(Subcmd):
                         item['totalAudioSize']=totals['size']
                         item['totalAudioLength']=totals['length']
                         stub=Stub.FromDict(item)
+                        st=tn()
                         if not mq(stub):
+                            debug_stats['t_mq']+=tdiff(st)
                             print("NO MATCH on mq {}".format(i_mq))
                             matches = False
                             break                    
@@ -225,6 +257,7 @@ class Learn(Subcmd):
                 # update aggregate data, last checked date,
                 # and status of existence and status of
                 # metadata storage in db.
+                st=tn()
                 updates = (('totalAudioLength', totals['length']),
                            ('totalAudioSize', totals['size']),
                            ('checkedOnUnixDate', now),
@@ -235,6 +268,7 @@ class Learn(Subcmd):
                 ArliDb.quick_update(c,
                                     updates,
                                     'WHERE tmpId=?', (item['tmpId'],))
+                debug_stats['t_update_exists']+=tdiff(st)
 
             adb.conn.commit()
             for metadata_pair in metadata_storage_queue:
