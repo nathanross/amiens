@@ -57,6 +57,7 @@ class Learn(Subcmd):
                 
                 if not unknowable_length:
                     if not (f.find('length') == None) and \
+                       not (f.find('length').text == None) and \
                        not (f.find('length').text == ''):
                         if totals['length'] == None:
                             totals['length'] = 0
