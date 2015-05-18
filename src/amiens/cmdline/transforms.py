@@ -119,7 +119,7 @@ class Transforms(object):
         else:
             asserts.isdir(goal, arg)
             asserts.canwrite(goal, arg)
-        return arg
+        return path.abspath(arg)
 
     @staticmethod
     def quality(arg):

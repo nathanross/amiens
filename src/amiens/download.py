@@ -21,8 +21,11 @@ class Download(Subcmd):
 
     @staticmethod
     def cmd(args):
+        adb = args['catalogue_path'].adb
         item = args['item']
-        scratchdir = args['outdir']
+        scratchdir = args['scratchdir']
         outdir = args['outdir']
         quality = args['quality']
-        item.write(scratchdir, outdir, quality)
+        filter_query = args['filter_fq'][0]
+        item.data['downloadLevel']=quality
+        item.write(adb, filter_query, scratchdir, outdir)
