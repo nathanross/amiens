@@ -24,6 +24,7 @@ from amiens.core.amiensdb import ArliDb
 
 import subprocess
 import time
+import os
 
 class AddIdents(Subcmd):
     
