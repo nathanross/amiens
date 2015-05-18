@@ -210,6 +210,7 @@ def parse(args_orig):
                          ' or (atomically) upgrades the quality of'
                          ' each file if the files are of lower size.'),
             arguments = [
+                args['catalogue_path'],
                 args['item'],
                 args['scratchdir'],
                 args['outdir'],
