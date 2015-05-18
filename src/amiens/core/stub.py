@@ -30,6 +30,7 @@ import re
 import os
 from os import path
 
+
 class Stub:
     def __init__(self, tmp_id, ident, metadata,
                  length=None, size=None,
@@ -203,7 +204,7 @@ class Stub:
                 Log.force(repr(f))
                 if f.get('source') == 'original':
                     fnames.append(f.get('name'))
-            orig_dir=scratchdir+'/original'                
+            orig_dir=scratchdir+'/original'
             os.makedirs(orig_dir)
             self._downloadFnames(adb,
                                  orig_dir, fnames)
@@ -322,6 +323,8 @@ class Stub:
         if self.data['downloadLevel'] > towrite['downloadLevel'] and \
            not still_locked:
             scratchdir=arg_scratchdir.rstrip('/')
+            if os.path.exists(scratchdir):
+                scratchdir=scratchdir+'/'+ 'amiens' + str(time.time())
             Log.outline('trying to download')
             towrite['downloadLevel'] = self.data['downloadLevel']
             self._downloadOrchestrator(
@@ -331,6 +334,7 @@ class Stub:
                 l_d_out=l,
                 quality=self.data['downloadLevel']
             )
+            os.rmdir(scratchdir)
         
         towrite['downloadLock'] = 0
         util.json_write(goal, l_json, towrite)
