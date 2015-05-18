@@ -218,6 +218,15 @@ class Stub:
                 subdir,
                 l_d_out
             )
+        # obviously, because this fn isn't called if only the stubfile
+        # is written, blockDownload is only updated if more than the
+        # stubfile is written.
+        # todo: consider if blockdownload should only be called when
+        # original is called., but that only becomes relevant if
+        # and when we flesh out what other formats may look like. Other
+        # quality levels are by definition going to be imperfect downloads as
+        # many items will have some files Iarchive was able to convert
+        # and some it was not able to.
         adb.one_off_update(
             (('blockDownload', enums.BLOCKDOWNLOAD.DOWNLOADED.value),),
             'WHERE tmpId=?',
@@ -290,13 +299,15 @@ class Stub:
         towrite['downloadLock'] = now
         still_locked=False
         if (path.exists(l_json)):
-            old_stub=util.json_read(goal, l_json)            
+            old_stub=util.json_read(goal, l_json)
+                        
             towrite['downloadLevel'] = old_stub['downloadLevel']
 
             lower_quality=old_stub['downloadLevel'] >= self.data['downloadLevel']
             still_locked=((old_stub['downloadLock'] + 60*60*24) > now)
             if lower_quality or still_locked:
                 towrite['downloadLock'] = old_stub['downloadLock']
+                    
         else:
             # downloadLevel in the stub file should only be the COMPLETED
             # downloadfile, and not reflect any download in progress
@@ -312,7 +323,8 @@ class Stub:
            not still_locked:
             scratchdir=arg_scratchdir.rstrip('/')
             Log.outline('trying to download')
-            towrite['downloadLevel'] = self._downloadOrchestrator(
+            towrite['downloadLevel'] = self.data['downloadLevel']
+            self._downloadOrchestrator(
                 adb=adb,
                 fq=fq,
                 scratchdir=scratchdir,
