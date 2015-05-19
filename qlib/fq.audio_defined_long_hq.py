@@ -34,6 +34,9 @@ def audio_strict_long_hq(s, l):
     if s == None:
         #every media files < 30kb each. skip.
         return False
+    if (s / 1048576) > 1700:
+        #assume uninterested in downloading things past the size of two FLAC cds.
+        return False
     print('fq`length:'+repr(l))    
     if l < (min_minutes * 60):
         #print('less than {}, skipping'.format(min_minutes*60))
