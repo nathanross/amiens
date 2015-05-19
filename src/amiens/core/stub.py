@@ -204,14 +204,16 @@ class Stub:
                 Log.force(repr(f))
                 if f.get('source') == 'original':
                     fnames.append(f.get('name'))
-            orig_dir=scratchdir+'/original'
-            os.makedirs(orig_dir)
+            orig_dir=scratchdir#+'/original'
+            #if we have the original files I think it's safe to presume that they,
+            # the highest quality files, will be the default.
+            #os.makedirs(orig_dir)
             self._downloadFnames(adb,
                                  orig_dir, fnames)
             length=self._getLength(adb, orig_dir)
             Log.force('length_final:'+repr(length))
             if not fq['callback'](self.data['totalAudioSize'], length):
-                shutil.rmtree(orig_dir)
+                #shutil.rmtree(orig_dir) #as above, orig has no subdir.
                 return True
 
         for subdir in glob.glob(scratchdir+'/*'):
