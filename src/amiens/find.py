@@ -25,7 +25,7 @@ class Find(Subcmd):
     @staticmethod
     def find(catalogue, fq, mqs=[], result_limit=1000, test_limit=100000):
         adb = catalogue.adb
-        sql_filter_str='WHERE blockDownload =? AND hasMetadata=? AND (rating is not ? AND rating is not ? AND rating is not ?) {} LIMIT ?'
+        sql_filter_str='WHERE blockDownload =? AND hasMetadata=? AND (rating is not ? AND rating is not ? AND rating is not ? AND rating is not ?) {} LIMIT ?'
         sql_filter_str=sql_filter_str.format(fq['sql'])
         Log.debug('sql:'+sql_filter_str)
         tmpresults=adb.one_off_select(
@@ -36,6 +36,7 @@ class Find(Subcmd):
               enums.RATING.SKIPPED.value,
               enums.RATING.CONFIRM_SKIPPED.value,
               enums.RATING.MANUAL_SKIP.value,
+              enums.RATING.TOSS.value,
               test_limit)
         )
         results = []
