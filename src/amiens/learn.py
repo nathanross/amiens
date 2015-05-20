@@ -327,9 +327,7 @@ class Learn(Subcmd):
                 # go through threads and stop keeping track of
                 # completed ones
                 while i < len(threads):
-                    Log.force('checking thread at position {}'.format(repr(i)))
                     if threads[i][0].is_alive():
-                        Log.force('thread still alive')
                         i+=1
                         continue
                     Log.force('thread complete, printing logs '

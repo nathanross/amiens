@@ -114,7 +114,7 @@ def parse(args_orig):
                     ),
         'max_connections' : _Arg(ext='max_connections', short='-p',
                                  nargs='default',
-                                 type=int, default=1,
+                                 type=int, default=8,
                                  help=('max simultaneous connections'
                                        'to use at same time when learning'
                                        'from web.'),
