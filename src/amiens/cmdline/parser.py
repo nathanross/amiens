@@ -156,7 +156,7 @@ def parse(args_orig):
                      nargs='default',
                      type=int, default=5,
                      help='number of minutes to fetch for. default is 5'),                
-                _Arg(ext='fetch_m_fq', short="-q",
+                _Arg(ext='fetch_m_fq', short="-f",
                      nargs='default',
                      type=str, default="qlib/fq.dummy.py3", 
                      help=('filequery which, by returning false,'
