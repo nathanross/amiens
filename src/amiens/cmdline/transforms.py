@@ -125,7 +125,14 @@ class Transforms(object):
     def quality(arg):
         goal='received quality argument'
         asserts.that(arg <= 4, goal+' but it is higher than the maximum 4')
-        asserts.that(arg >= 0, goal+' but it is lower than the minimum 1')
+        asserts.that(arg >= 0, goal+' but it is lower than the minimum 0')
+        return arg
+
+    @staticmethod
+    def max_connections(arg):
+        goal='received max_connections argument'
+        asserts.that(arg <= 32, goal+' but it is higher than the maximum 4')
+        asserts.that(arg >= 1, goal+' but it is lower than the minimum 1')
         return arg
     
     @staticmethod

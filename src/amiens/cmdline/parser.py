@@ -111,7 +111,14 @@ def parse(args_orig):
                            'and downloads which have non-matching'
                            'length, bitrate, size, etc.'),
                      transform=Transforms.mqs_fqs
-                ),
+                    ),
+        'max_connections' : _Arg(ext='max_connections', short='-p',
+                                 nargs='default',
+                                 type=int, default=1,
+                                 help=('max simultaneous connections'
+                                       'to use at same time when learning'
+                                       'from web.'),
+                                 transform=Transforms.max_connections)
     }
     commands = [
         _Command(
@@ -172,6 +179,7 @@ def parse(args_orig):
                            'meta content.'),
                      transform=Transforms.mqs_fqs
                 ),
+                args['max_connections'],
                 args['media_type'],
                 args['data_src']
             ],

@@ -31,7 +31,6 @@ import random
 import threading
 
 #note this also means max simultaneous HTTP requests to archive.org
-MAX_THREADS=1
 _tn = lambda : time.time()
 _tdiff = lambda z: (time.time()) - z
         
@@ -238,7 +237,9 @@ class Learn(Subcmd):
     # of time relative to any nice listening music gained
     # (e.g. 10 seconds of audio.)
     @staticmethod
-    def from_web(catalogue, media_type, minutes, fetch_m_fq, keep_m_mqs):
+    def from_web(catalogue, media_type, minutes, fetch_m_fq, keep_m_mqs,
+                 max_connections):
+        MAX_THREADS=max_connections
         adb = catalogue.adb
         now = start_unixtime = int(time.time())
         count=0
@@ -395,13 +396,15 @@ class Learn(Subcmd):
         fetch_m_fq=args['fetch_m_fq']
         keep_m_mqs=args['keep_m_mqs']
         data_src=args['data_src']
+        max_connections=args['max_connections']
         if data_src == None:
             Learn.from_web(
                 catalogue=catalogue,
                 media_type=media_type,
                 minutes=minutes,
                 fetch_m_fq=fetch_m_fq,
-                keep_m_mqs=keep_m_mqs
+                keep_m_mqs=keep_m_mqs,
+                max_connections=max_connections
             )
         else:
             Log.fatal('learn from other db not supported yet.')
