@@ -20,7 +20,7 @@ from amiens.core import enums
 from amiens.core import util
 from amiens.core.stub import Stub
 from amiens.core.fetchinfo import FetchInfo
-from amiens.core.util import Log
+from amiens.core.util import Log, LogSeverity
 from amiens.core.amiensdb import ArliDb
 
 import defusedxml.ElementTree as etree
@@ -55,9 +55,9 @@ def _StubBuilder():
              # to use that, better to keep everything in stats strictly
              # for debugging, rather than pollute it with sidechannel usage.
 
-             'seekingMetadata':False
+             'seekingMetadata':False,
              'stats': {
-                 'passed fq':False
+                 'passed fq':False,
              }
          }
 
@@ -141,13 +141,14 @@ class Learn(Subcmd):
         return totals
     
     @staticmethod
-    def get_xmls(item, threadsafe_list):
+    def get_xmls(item, threadsafe_list, msg_log):
         
         result = _StubBuilder()
         for field in ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'):
             result[field] = item[field]
             
-        Log.data('updating item {}'.format(item['tmpId']))
+        msg_log.append((LogSeverity.DATA,
+                       'updating item {}'.format(item['tmpId']))
 
         #parse file data
         #filedata_etree = FetchInfo.as_etree(
@@ -156,12 +157,13 @@ class Learn(Subcmd):
                                         FetchInfo.FILEDATA)
         filedata_etree = etree.fromstring(filedata_xml)
         
-        Log.debug(etree.tostring(filedata_etree).decode())
+        msg_log.append((LogSeverity.DEBUG,
+                        etree.tostring(filedata_etree).decode()))
         if not filedata_etree:
             #if none found, mark it as nonexistent in the database.
             result['existsStatus'] = enums.EXISTS_STATUS.DELETED.value
         else:
-            results['existStatus'] = enums.EXISTS_STATUS.EXISTS.value
+            result['existStatus'] = enums.EXISTS_STATUS.EXISTS.value
             #otherwise get aggregate media data only available
             #in filedata.
             totals = Learn._sum_filedata_totals(filedata_etree)
@@ -172,10 +174,12 @@ class Learn(Subcmd):
             if rprev == RATING.UNRATED.value or \
                rprev == RATING.CONFIRM_UNRATED.value and \
                fetch_m_fq[0]['callback'](totals['size'], totals['length']):
+                msg_log.append((LogSeverity.DEBUG, 'passed FQ'))
                 result['stats']['passed fq'] = True
                 result['seekingMetadata'] = True
             if result['seekingMetadata'] or \
-               rprev >= RATING.value:            
+               rprev >= RATING.value:
+                msg_log.append((LogSeverity.DEBUG, 'downloading metadata'))
                 result['metadata'] = FetchInfo.as_str(item['ident'],
                                                FetchInfo.METADATA)
         threadsafe_list.append(result)
@@ -191,7 +195,7 @@ class Learn(Subcmd):
                     debug_stats['updated (no fq,mq)'] +=1
                 continue
             st=_tn()
-            Log.debug(result.metadata_xml)
+            Log.debug(result['metadata'])
             metadata_etree = etree.fromstring(result['metadata'])
             debug_stats['t_parse_mxml']+=_tdiff(st)
             matches = True
@@ -286,21 +290,24 @@ class Learn(Subcmd):
             ident_index=0            
             
             return_queue=[]
-            while ident_index < len(items) and len(threads) > 0:
+            while ident_index < len(items) or len(threads) > 0:
+                
                 # if we have items available, and are tracking less threads
                 # than the maximum, create a new therad.
-                if not past_time_limit and \
+                if (_tn() - start_unixtime) < minutes*60 and \
                    len(threads) < MAX_THREADS and \
                    ident_index < len(items):
-                    threads.append(
-                        threading.Thread(
+                    message_log=[]
+                    newthread=threading.Thread(
                             target=Learn.get_xmls,
                             args=(
                                 items[ident_index],
-                                return_queue
+                                return_queue,
+                                message_log
                             )
                         )
-                    )
+                    threads.append((newthread, message_log))
+                    newthread.start()
                     debug_stats['checked'] += 1
                     ident_index += 1
                 time.sleep(0.5)
@@ -308,9 +315,11 @@ class Learn(Subcmd):
                 # go through threads and stop keeping track of
                 # completed ones
                 while i < len(threads):
-                    if threads[i].is_alive():
+                    if threads[i][0].is_alive():
                         i+=1
                         continue
+                    for msg in message_log:
+                        Log.log(msg[0], msg[1])
                     threads.__delitem__(i)            
             debug_stats['t_fetch_xmls']+=_tdiff(st)
             # updates
@@ -334,9 +343,10 @@ class Learn(Subcmd):
                 debug_stats
             )
             
-            for result in returnqueue:
+            for result in return_queue:
                 debug_stats['checked'] +=1
-                if result['existsStatus'] == enums.EXISTS_STATUS.EXISTS.value:
+                if result['existsStatus'] == \
+                   enums.EXISTS_STATUS.EXISTS.value:
                     debug_stats['still exist'] += 1
                     if result['stats']['passed fq']:
                         debug_stats['passed_fq'] +=1
