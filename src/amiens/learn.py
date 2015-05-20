@@ -141,14 +141,14 @@ class Learn(Subcmd):
         return totals
     
     @staticmethod
-    def get_xmls(item, threadsafe_list, msg_log):
+    def get_xmls(item, fq, threadsafe_list, msg_log):
         
         result = _StubBuilder()
         for field in ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'):
             result[field] = item[field]
             
         msg_log.append((LogSeverity.DATA,
-                       'updating item {}'.format(item['tmpId']))
+                       'updating item {}'.format(item['tmpId'])))
 
         #parse file data
         #filedata_etree = FetchInfo.as_etree(
@@ -163,22 +163,26 @@ class Learn(Subcmd):
             #if none found, mark it as nonexistent in the database.
             result['existsStatus'] = enums.EXISTS_STATUS.DELETED.value
         else:
-            result['existStatus'] = enums.EXISTS_STATUS.EXISTS.value
+            result['existsStatus'] = enums.EXISTS_STATUS.EXISTS.value
             #otherwise get aggregate media data only available
             #in filedata.
             totals = Learn._sum_filedata_totals(filedata_etree)
+            msg_log.append((LogSeverity.DEBUG,
+                            'totals are:'+repr(totals)))
             result['totalAudioLength'] = totals['length']
             result['totalAudioSize'] = totals['size']
             rprev=result['rating']
             RATING=enums.RATING
-            if rprev == RATING.UNRATED.value or \
-               rprev == RATING.CONFIRM_UNRATED.value and \
-               fetch_m_fq[0]['callback'](totals['size'], totals['length']):
+            #for now we assume only one fq otherwise there are
+            # complications with sql filter chaining.
+            if (rprev == RATING.UNRATED.value or \
+               rprev == RATING.CONFIRM_UNRATED.value) and \
+               fq['callback'](totals['size'], totals['length']):
                 msg_log.append((LogSeverity.DEBUG, 'passed FQ'))
                 result['stats']['passed fq'] = True
                 result['seekingMetadata'] = True
             if result['seekingMetadata'] or \
-               rprev >= RATING.value:
+               rprev >= RATING.BAD.value:
                 msg_log.append((LogSeverity.DEBUG, 'downloading metadata'))
                 result['metadata'] = FetchInfo.as_str(item['ident'],
                                                FetchInfo.METADATA)
@@ -190,7 +194,9 @@ class Learn(Subcmd):
         for result in return_queue:
             # even if updating an item, metadata is
             # set to None unless the fq was passed.
+            Log.debug('in regard to result '+result['ident'])
             if result['seekingMetadata'] == False:
+                Log.force('not seeking metadata')
                 if result['metadata']:
                     debug_stats['updated (no fq,mq)'] +=1
                 continue
@@ -202,10 +208,10 @@ class Learn(Subcmd):
             stub=Stub.FromDict(result)
             st=_tn()
             #if it matches callbacks to keep it...
-            for i_mq in range(0, len(keep_m_mqs)):
+            for i_mq in range(0, len(mqs)):
                 mq = mqs[i_mq]['callback']
                 if not mq(stub):
-                    print("NO MATCH on mq {}".format(i_mq))
+                    Log.debug("NO MATCH on mq {}".format(i_mq))
                     matches = False
                     break
             debug_stats['t_mq']+=_tdiff(st)
@@ -290,18 +296,23 @@ class Learn(Subcmd):
             ident_index=0            
             
             return_queue=[]
-            while ident_index < len(items) or len(threads) > 0:
-                
+            wait_interval=0.5/MAX_THREADS
+            past_time_limit=False
+            while (ident_index < len(items) and not past_time_limit) or \
+                  len(threads) > 0:
+                past_time_limit=(_tn() - start_unixtime) > minutes*60
                 # if we have items available, and are tracking less threads
                 # than the maximum, create a new therad.
-                if (_tn() - start_unixtime) < minutes*60 and \
+                if not past_time_limit and \
                    len(threads) < MAX_THREADS and \
                    ident_index < len(items):
+                    Log.force('creating new thread')
                     message_log=[]
                     newthread=threading.Thread(
                             target=Learn.get_xmls,
                             args=(
                                 items[ident_index],
+                                fetch_m_fq[0],
                                 return_queue,
                                 message_log
                             )
@@ -310,14 +321,18 @@ class Learn(Subcmd):
                     newthread.start()
                     debug_stats['checked'] += 1
                     ident_index += 1
-                time.sleep(0.5)
+                time.sleep(wait_interval)
                 i=0
                 # go through threads and stop keeping track of
                 # completed ones
                 while i < len(threads):
+                    Log.force('checking thread at position {}'.format(repr(i)))
                     if threads[i][0].is_alive():
+                        Log.force('thread still alive')
                         i+=1
                         continue
+                    Log.force('thread complete, printing logs '
+                              'then clearing position')
                     for msg in message_log:
                         Log.log(msg[0], msg[1])
                     threads.__delitem__(i)            
@@ -328,7 +343,7 @@ class Learn(Subcmd):
             # for practical purposes infinite number of unchecked
             # items where bandwidth, processor, and time of fetching
             # their XML will be worth it) 
-                
+            
             # rather than dealing with thread-safe writes to 4-5
             # different objects for multiple conditions, just
             # deal with threadsafe (though out-of-order is fine)
@@ -337,6 +352,8 @@ class Learn(Subcmd):
             # (also GIL prevents threads from helping with processing time)
             # so its find to keep processing and db-io stuff
             # singlethreaded
+
+            Log.force('done fetching xmls')
             metadata_storage_queue=Learn.filter_new_metadata(
                 return_queue,
                 keep_m_mqs,
@@ -344,12 +361,11 @@ class Learn(Subcmd):
             )
             
             for result in return_queue:
-                debug_stats['checked'] +=1
                 if result['existsStatus'] == \
                    enums.EXISTS_STATUS.EXISTS.value:
                     debug_stats['still exist'] += 1
                     if result['stats']['passed fq']:
-                        debug_stats['passed_fq'] +=1
+                        debug_stats['passed fq'] +=1
                     update_fields=('totalAudioLength',
                                    'totalAudioSize',
                                    'rating',
@@ -362,7 +378,7 @@ class Learn(Subcmd):
                 st=_tn()
                 ArliDb.quick_update(c,
                                     update_keyvals,
-                                    'WHERE tmpId=?', (item['tmpId'],))
+                                    'WHERE tmpId=?', (result['tmpId'],))
                 
                 debug_stats['t_update_exists']+=_tdiff(st)
             adb.conn.commit()
