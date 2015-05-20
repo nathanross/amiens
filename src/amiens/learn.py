@@ -28,11 +28,62 @@ import time
 from math import ceil
 import re
 import random
+import threading
+
+#note this also means max simultaneous HTTP requests to archive.org
+MAX_THREADS=1
+_tn = lambda : time.time()
+_tdiff = lambda z: (time.time()) - z
+        
+def _StubBuilder():
+    return { 'tmpId':None,
+             'ident':None,
+             'totalAudioLength':None,
+             'totalAudioSize':None,
+             'metadata':None,
+             'rating':0,
+             'comment':'',
+             'existsStatus':None,
+             'checkedOnUnixDate': None,
+             'hasMetadata':None,
+             # special key value only for learn.
+             # no reason for a persistent enum val for hasMetadata
+             # regarding whether fq has passed if its information
+             # that is generated and only needed within the course
+             # of a single learn call.
+             # IS redundant with stats['passed_fq'] but don't want
+             # to use that, better to keep everything in stats strictly
+             # for debugging, rather than pollute it with sidechannel usage.
+
+             'seekingMetadata':False
+             'stats': {
+                 'passed fq':False
+             }
+         }
 
 class Learn(Subcmd):
     RE_FLOAT=re.compile('^\d+(\.\d+)?$')
     RE_M_S=re.compile('^(\d+):(\d\d?)$')
     RE_H_M_S=re.compile('^(\d+):(\d\d?):(\d\d?)$')
+
+    @staticmethod
+    def getLearningTargets(c, offset, step_size):
+        filter_sql=('WHERE ((tmpId+{}) % {} = 0) '
+             'AND ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
+             'AND ((existsStatus IS NULL) OR (existsStatus < ?)) '
+             'AND (rating = ? OR rating = ?) LIMIT 1000').format(offset,
+                                                                 step_size)
+        return ArliDb.quick_select(
+            c,
+            ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
+            filter_sql,
+            # we don't filter by has metadata, because we reserve
+            # the right for the learn process to not necessarily update
+            # metadata, so not having metadata isn't an indicator
+            # of priority to be checked.
+            (enums.EXISTS_STATUS.DELETED.value,
+             enums.RATING.UNRATED.value,
+             enums.RATING.CONFIRM_UNRATED.value))
     
     @staticmethod
     def _sum_filedata_totals(filedata_etree):
@@ -56,9 +107,10 @@ class Learn(Subcmd):
                 totals['size'] += fsize
                 
                 if not unknowable_length:
-                    if not (f.find('length') == None) and \
-                       not (f.find('length').text == None) and \
-                       not (f.find('length').text == ''):
+                    length_el=f.find('length')
+                    if not (length_el == None) and \
+                       not (length_el.text == None) and \
+                       not (length_el.text == ''):
                         if totals['length'] == None:
                             totals['length'] = 0
                         lengthval=f.find('length').text
@@ -68,15 +120,18 @@ class Learn(Subcmd):
                         elif re.match(Learn.RE_M_S, lengthval):
                             # minutes:seconds
                             m, s = \
-                            [ int(x) for x in re.match(Learn.RE_M_S, lengthval).groups() ]
+                            [ int(x) for x in re.match(Learn.RE_M_S,
+                                                       lengthval).groups() ]
                             totals['length'] += m*60 + s
                         elif re.match(Learn.RE_H_M_S, lengthval):
                             # hours:minutes:seconds
                             h, m, s = \
-                             [ int(x) for x in re.match(Learn.RE_H_M_S, lengthval).groups() ]
+                             [ int(x) for x in re.match(Learn.RE_H_M_S,
+                                                        lengthval).groups() ]
                             totals['length'] += h*3600 + m*60 + s
                         else:
-                            Log.warning('couldnt successfully interpret length value <{}>'.format(val))
+                            Log.warning(('couldnt successfully interpret'
+                                        'length value <{}>').format(val))
                             unknowable_length = True
                             totals['length'] = None
                     else:
@@ -84,7 +139,87 @@ class Learn(Subcmd):
                         totals['length'] = None                    
 
         return totals
+    
+    @staticmethod
+    def get_xmls(item, threadsafe_list):
         
+        result = _StubBuilder()
+        for field in ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'):
+            result[field] = item[field]
+            
+        Log.data('updating item {}'.format(item['tmpId']))
+
+        #parse file data
+        #filedata_etree = FetchInfo.as_etree(
+        #    item['ident'], FetchInfo.FILEDATA)
+        filedata_xml = FetchInfo.as_str(item['ident'],
+                                        FetchInfo.FILEDATA)
+        filedata_etree = etree.fromstring(filedata_xml)
+        
+        Log.debug(etree.tostring(filedata_etree).decode())
+        if not filedata_etree:
+            #if none found, mark it as nonexistent in the database.
+            result['existsStatus'] = enums.EXISTS_STATUS.DELETED.value
+        else:
+            results['existStatus'] = enums.EXISTS_STATUS.EXISTS.value
+            #otherwise get aggregate media data only available
+            #in filedata.
+            totals = Learn._sum_filedata_totals(filedata_etree)
+            result['totalAudioLength'] = totals['length']
+            result['totalAudioSize'] = totals['size']
+            rprev=result['rating']
+            RATING=enums.RATING
+            if rprev == RATING.UNRATED.value or \
+               rprev == RATING.CONFIRM_UNRATED.value and \
+               fetch_m_fq[0]['callback'](totals['size'], totals['length']):
+                result['stats']['passed fq'] = True
+                result['seekingMetadata'] = True
+            if result['seekingMetadata'] or \
+               rprev >= RATING.value:            
+                result['metadata'] = FetchInfo.as_str(item['ident'],
+                                               FetchInfo.METADATA)
+        threadsafe_list.append(result)
+        
+    @staticmethod
+    def filter_new_metadata(return_queue, mqs, debug_stats):
+        metadata_storage_queue=[]
+        for result in return_queue:
+            # even if updating an item, metadata is
+            # set to None unless the fq was passed.
+            if result['seekingMetadata'] == False:
+                if result['metadata']:
+                    debug_stats['updated (no fq,mq)'] +=1
+                continue
+            st=_tn()
+            Log.debug(result.metadata_xml)
+            metadata_etree = etree.fromstring(result['metadata'])
+            debug_stats['t_parse_mxml']+=_tdiff(st)
+            matches = True
+            stub=Stub.FromDict(result)
+            st=_tn()
+            #if it matches callbacks to keep it...
+            for i_mq in range(0, len(keep_m_mqs)):
+                mq = mqs[i_mq]['callback']
+                if not mq(stub):
+                    print("NO MATCH on mq {}".format(i_mq))
+                    matches = False
+                    break
+            debug_stats['t_mq']+=_tdiff(st)
+            if matches:
+                debug_stats['passed mqs'] += 1
+                Log.debug('keep_m_mqs all matched. writing xml to disk')
+                #store it so its usable by find()
+                #we can handle the amount of ram, given that we won't
+                # be storing more than 1k at a time at any point.
+                metadata_storage_queue.append(
+                    (result['ident'], result['metadata']))
+                result['hasMetadata'] = enums.METADATA_STATUS.STORED.value
+                #else if block_non_match:
+                #    has_metadata = METADATA_STATUS.BLOCKED
+                return metadata_storage_queue
+            else:
+                result['rating'] = enums.RATING.SKIPPED.value
+        return metadata_storage_queue
     
     # filefilters here aren't meant so much for you know
     # "am i in the mood for something really long"
@@ -97,25 +232,22 @@ class Learn(Subcmd):
         adb = catalogue.adb
         now = start_unixtime = int(time.time())
         count=0
-        debug_counters=[
+        debug_counters=(
             'checked',
             'still exist',
             'passed fq',
+            'updated (no fq,mq)',
             'passed mqs',
-            't_fetch_fxml',
-            't_parse_fxml',
-            't_fetch_mxml',
+            't_select',
+            't_fetch_xmls',
             't_parse_mxml',
-            't_get_totals',
-            't_fq',
             't_mq',
             't_update_exists',
-            't_select'
-        ]
-        tn = lambda : time.time()
-        tdiff = lambda z: (time.time()) - z
+        )
         debug_stats = {}
-
+        for counter in debug_counters:
+            debug_stats[counter] = 0
+            
         c = adb.conn.cursor()
         c.execute('select count(*) from items')
         total_idents=c.fetchall()[0][0]
@@ -131,11 +263,10 @@ class Learn(Subcmd):
         # checking the same restricted set of 2000 idents over and over again.
         step_size=int(total_idents/1000) #truncates
         
-        for counter in debug_counters:
-            debug_stats[counter] = 0
         while (now - start_unixtime) < minutes*60 :
             now = int(time.time())
-            offset=random.randint(0, step_size-1) #randint is inclusive on both ends.
+            offset=random.randint(0, step_size-1)
+            #randint is inclusive on both ends.
             c = adb.conn.cursor()            
             # for now, just only look at idents
             # we've never looked at before.
@@ -143,138 +274,91 @@ class Learn(Subcmd):
             # not likely, we can change this code.
             # todo (AND NOT = exists_status enumval)
             # instead of (AND < enum val)
-            st=tn()
-            items=ArliDb.quick_select(
-                c,
-                ('tmpId', 'ident', 'hasMetadata', 'rating', 'comment'),
-                ('WHERE ((tmpId+{}) % {} = 0) '
-                 'AND ((checkedOnUnixDate < 0) OR (checkedOnUnixDate IS NULL)) '
-                 'AND ((existsStatus IS NULL) OR (existsStatus < ?)) '
-                 'AND (rating = ? OR rating = ?) LIMIT 1000').format(offset, step_size),
-                # we don't filter by has metadata, because we reserve
-                # the right for the learn process to not necessarily update
-                # metadata, so not having metadata isn't an indicator
-                # of priority to be checked.
-                (enums.EXISTS_STATUS.DELETED.value,
-                enums.RATING.UNRATED.value,
-                enums.RATING.CONFIRM_UNRATED.value))
-            debug_stats['t_select']+=tdiff(st)
+            st=_tn()
+            items=Learn.getLearningTargets(c, offset, step_size)
+            debug_stats['t_select']+=_tdiff(st)
             if len(items) == 0:
-                Log.fatal('couldnt find any candidates for learning, please get some idents.')
-            metadata_storage_queue=[]
-            for item in items:
-                Log.data('updating item {}'.format(item['tmpId']))
-                now = int(time.time())
-                debug_stats['checked'] += 1
-                if not ((now - start_unixtime) < minutes*60):
-                    break
+                Log.fatal('couldnt find any candidates for learning,'
+                          'please get some idents.')
+            
+            st=_tn()
+            threads = []
+            ident_index=0            
+            
+            return_queue=[]
+            while ident_index < len(items) and len(threads) > 0:
+                # if we have items available, and are tracking less threads
+                # than the maximum, create a new therad.
+                if not past_time_limit and \
+                   len(threads) < MAX_THREADS and \
+                   ident_index < len(items):
+                    threads.append(
+                        threading.Thread(
+                            target=Learn.get_xmls,
+                            args=(
+                                items[ident_index],
+                                return_queue
+                            )
+                        )
+                    )
+                    debug_stats['checked'] += 1
+                    ident_index += 1
+                time.sleep(0.5)
+                i=0
+                # go through threads and stop keeping track of
+                # completed ones
+                while i < len(threads):
+                    if threads[i].is_alive():
+                        i+=1
+                        continue
+                    threads.__delitem__(i)            
+            debug_stats['t_fetch_xmls']+=_tdiff(st)
+            # updates
+            # never happen in the first place, (as its not a good
+            # ROI when most items dont change and there are a
+            # for practical purposes infinite number of unchecked
+            # items where bandwidth, processor, and time of fetching
+            # their XML will be worth it) 
                 
-                #parse file data
-                #filedata_etree = FetchInfo.as_etree(
-                #    item['ident'], FetchInfo.FILEDATA)
-                st=tn()
-                filedata_xml = FetchInfo.as_str(item['ident'],
-                                                FetchInfo.FILEDATA)
-                debug_stats['t_fetch_fxml']+=tdiff(st)
-                st=tn()
-                filedata_etree = etree.fromstring(filedata_xml)
-                debug_stats['t_parse_fxml']+=tdiff(st)
-
-                
-                Log.debug(etree.tostring(filedata_etree).decode())
-                #if none found, mark it as nonexistent in the database.
-                if not filedata_etree:
-                    ArliDb.quick_update(
-                        c,
-                        (
-                            ('existsStatus',
-                             enums.EXISTS_STATUS.DELETED.value),
-                        ),
-                        'WHERE tmpId=?', (item['tmpId'],))
-                    continue
-                
-                debug_stats['still exist'] += 1
-                
-                #otherwise get aggregate media data only available
-                #in filedata.
-                st=tn()
-                totals = Learn._sum_filedata_totals(filedata_etree)
-                debug_stats['t_get_totals']+=tdiff(st)
-                            
-                has_metadata = item['hasMetadata']
-                if has_metadata == None:
-                    has_metadata=enums.METADATA_STATUS.NONE.value
-                
-                rating = enums.RATING.UNRATED.value
-                #if we don't have the metadata, and aggregate media data
-                # indicates to keep it...
-                st=tn()
-                if (has_metadata == \
-                   enums.METADATA_STATUS.NONE.value) and \
-                   fetch_m_fq[0]['callback'](totals['size'], totals['length']):
-                    debug_stats['passed fq'] += 1
-                    debug_stats['t_fq']+=tdiff(st)
-                    Log.debug('passed fq, retrieving metadata')
-                    #download the metadata
-                    st=tn()
-                    metadata_xml = FetchInfo.as_str(item['ident'],
-                                                    FetchInfo.METADATA)
-                    debug_stats['t_fetch_mxml']+=tdiff(st)
-                    st=tn()
-                    metadata_etree = etree.fromstring(metadata_xml)
-                    debug_stats['t_parse_mxml']+=tdiff(st)
-                    Log.debug('metadata_etree')
-                    Log.debug(etree.tostring(metadata_etree).decode())
-                    matches = True
-                    
-                    #if it matches callbacks to keep it...
-                    for i_mq in range(0, len(keep_m_mqs)):
-                        mq = keep_m_mqs[i_mq]['callback']
-                        item['metadata']=metadata_xml
-                        item['totalAudioSize']=totals['size']
-                        item['totalAudioLength']=totals['length']
-                        stub=Stub.FromDict(item)
-                        st=tn()
-                        if not mq(stub):
-                            debug_stats['t_mq']+=tdiff(st)
-                            print("NO MATCH on mq {}".format(i_mq))
-                            matches = False
-                            break                    
-                    if matches:
-                        debug_stats['passed mqs'] +=1
-                        Log.debug('keep_m_mqs all matched. writing xml to disk')
-                        #store it so its usable by find()
-                        #we can handle the amount of ram, given that we won't
-                        # be storing more than 1k at a time at any point.
-                        metadata_storage_queue.append((item['ident'], metadata_xml))
-                        has_metadata = enums.METADATA_STATUS.STORED.value
-                    #else if block_non_match:
-                    #    has_metadata = METADATA_STATUS.BLOCKED
-                    else:
-
-                        rating = enums.RATING.SKIPPED.value
-                        
-                
-                # update aggregate data, last checked date,
-                # and status of existence and status of
-                # metadata storage in db.
-                st=tn()
-                updates = (('totalAudioLength', totals['length']),
-                           ('totalAudioSize', totals['size']),
-                           ('checkedOnUnixDate', now),
-                           ('rating', rating),
-                           ('hasMetadata', has_metadata),
-                           ('existsStatus',
-                            enums.EXISTS_STATUS.EXISTS.value))
+            # rather than dealing with thread-safe writes to 4-5
+            # different objects for multiple conditions, just
+            # deal with threadsafe (though out-of-order is fine)
+            # additions to one queue and process those. Remember,
+            # we're network-IO-bound, not processing or db-io bound
+            # (also GIL prevents threads from helping with processing time)
+            # so its find to keep processing and db-io stuff
+            # singlethreaded
+            metadata_storage_queue=Learn.filter_new_metadata(
+                return_queue,
+                keep_m_mqs,
+                debug_stats
+            )
+            
+            for result in returnqueue:
+                debug_stats['checked'] +=1
+                if result['existsStatus'] == enums.EXISTS_STATUS.EXISTS.value:
+                    debug_stats['still exist'] += 1
+                    if result['stats']['passed fq']:
+                        debug_stats['passed_fq'] +=1
+                    update_fields=('totalAudioLength',
+                                   'totalAudioSize',
+                                   'rating',
+                                   'existsStatus',
+                                   'checkedOnUnixDate',
+                                   'hasMetadata')
+                else:
+                    update_fields =('existsStatus', 'checkedOnUnixDate')
+                update_keyvals = [ (x, result[x]) for x in update_fields]
+                st=_tn()
                 ArliDb.quick_update(c,
-                                    updates,
+                                    update_keyvals,
                                     'WHERE tmpId=?', (item['tmpId'],))
-                debug_stats['t_update_exists']+=tdiff(st)
-
+                
+                debug_stats['t_update_exists']+=_tdiff(st)
             adb.conn.commit()
             for metadata_pair in metadata_storage_queue:
                 catalogue.store_metadata(*metadata_pair)
-            metadata_storage_queue=[]
+
         for counter in debug_counters:
             Log.outline(counter + ':' + str(debug_stats[counter]))
     @staticmethod
