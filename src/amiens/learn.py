@@ -332,7 +332,7 @@ class Learn(Subcmd):
                         continue
                     Log.force('thread complete, printing logs '
                               'then clearing position')
-                    for msg in message_log:
+                    for msg in threads[i][1]:
                         Log.log(msg[0], msg[1])
                     threads.__delitem__(i)            
             debug_stats['t_fetch_xmls']+=_tdiff(st)
