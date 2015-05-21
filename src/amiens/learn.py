@@ -415,7 +415,7 @@ class Learn(Subcmd):
                 catalogue.store_metadata(*metadata_pair)
 
         for counter in debug_counters:
-            Log.write(counter + ':' + str(debug_stats[counter]))
+            Log.writes(counter + ':' + str(debug_stats[counter]))
     @staticmethod
     def cmd(args):
         catalogue=args['catalogue_path']
