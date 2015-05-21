@@ -28,11 +28,17 @@ class FetchInfo(object):
     def as_str(ident, meta):
         keyword = 'meta' if (meta == FetchInfo.METADATA) else 'files'
         url ='https://archive.org/download/{0}/{0}_{1}.xml'.format(ident, keyword)
-        res= urllib.request.urlopen(url).read()
+        try:
+            res= urllib.request.urlopen(url).read()
+        except:
+            return None
         Log.data('url:'+url)
         return res.decode()
     
     @staticmethod
     def as_etree(ident, meta):
-        return etree.fromstring(FetchInfo.as_str(ident, meta))
+        res = FetchInfo.as_str(ident, meta)
+        if res == None:
+            return res
+        return etree.fromstring(res)
 

@@ -28,6 +28,7 @@ import time
 from math import ceil
 import re
 import random
+import math
 import threading
 
 #note this also means max simultaneous HTTP requests to archive.org
@@ -195,7 +196,7 @@ class Learn(Subcmd):
             # set to None unless the fq was passed.
             Log.debug('in regard to result '+result['ident'])
             if result['seekingMetadata'] == False:
-                Log.force('not seeking metadata')
+                Log.debug('not seeking metadata')
                 if result['metadata']:
                     debug_stats['updated (no fq,mq)'] +=1
                 continue
@@ -224,8 +225,7 @@ class Learn(Subcmd):
                     (result['ident'], result['metadata']))
                 result['hasMetadata'] = enums.METADATA_STATUS.STORED.value
                 #else if block_non_match:
-                #    has_metadata = METADATA_STATUS.BLOCKED
-                return metadata_storage_queue
+                #    has_metadata = METADATA_STATUS.BLOCKED                
             else:
                 result['rating'] = enums.RATING.SKIPPED.value
         return metadata_storage_queue
@@ -273,7 +273,8 @@ class Learn(Subcmd):
         # selecting over all idents) does not lead us to end up
         # checking the same restricted set of 2000 idents over and over again.
         step_size=int(total_idents/1000) #truncates
-        
+
+        consecutive_query_fails=0
         while (now - start_unixtime) < minutes*60 :
             now = int(time.time())
             offset=random.randint(0, step_size-1)
@@ -289,15 +290,36 @@ class Learn(Subcmd):
             items=Learn.getLearningTargets(c, offset, step_size)
             debug_stats['t_select']+=_tdiff(st)
             if len(items) == 0:
-                Log.fatal('couldnt find any candidates for learning,'
-                          'please get some idents.')
+                # every now and then you'll get a no-return
+                # simply from using a random offset that's been
+                # completed before.
+                consecutive_query_fails += 1
+                if consecutive_query_fails > 20:
+                    Log.fatal('couldnt find any candidates for learning,'
+                              'please get some idents.')
+            consecutive_query_fails=0
             
             st=_tn()
             threads = []
             ident_index=0            
             
             return_queue=[]
-            wait_interval=0.5/MAX_THREADS
+            
+            # ends up costing the processor a lot around 30+,            
+            # and no big improvements with experimental
+            # 'poll only most likely done threads'
+            # strategy commented out further below.
+            #wait_interval=0.5/MAX_THREADS
+
+            #not the sweet spot.
+            #wait_interval=0.05
+
+            #the sweet spot from +300ms latency and
+            # a moderate speed internet connection with high packet loss
+            # seems to be 33 simult. connections with a 0.02 wait interval.
+            wait_interval=0.02
+            
+            #wait_interval=0.01
             past_time_limit=False
             while (ident_index < len(items) and not past_time_limit) or \
                   len(threads) > 0:
@@ -307,8 +329,8 @@ class Learn(Subcmd):
                 if not past_time_limit and \
                    len(threads) < MAX_THREADS and \
                    ident_index < len(items):
-                    Log.force('creating new thread')
                     message_log=[]
+                    Log.debug('creating thread')
                     newthread=threading.Thread(
                             target=Learn.get_xmls,
                             args=(
@@ -327,15 +349,17 @@ class Learn(Subcmd):
                 # go through threads and stop keeping track of
                 # completed ones
                 while i < len(threads):
+                    #while i < int(math.floor(len(threads)+1/2.)):
                     if threads[i][0].is_alive():
                         i+=1
                         continue
-                    Log.force('thread complete, printing logs '
+                    Log.debug('thread complete, printing logs '
                               'then clearing position')
                     for msg in threads[i][1]:
                         Log.log(msg[0], msg[1])
                     threads.__delitem__(i)            
             debug_stats['t_fetch_xmls']+=_tdiff(st)
+
             # updates
             # never happen in the first place, (as its not a good
             # ROI when most items dont change and there are a
@@ -352,7 +376,6 @@ class Learn(Subcmd):
             # so its find to keep processing and db-io stuff
             # singlethreaded
 
-            Log.force('done fetching xmls')
             metadata_storage_queue=Learn.filter_new_metadata(
                 return_queue,
                 keep_m_mqs,
