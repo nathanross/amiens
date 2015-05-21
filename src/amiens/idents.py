@@ -63,18 +63,20 @@ class AddIdents(Subcmd):
         goal='fetch a list of identifiers from the web'
 
         mtypestr=media_type.name
-        outpath='/tmp/identList.'+str(int(time.time()))+'.csv'
-        asserts.dne(goal, outpath)
-        subprocess.call(['wget',
-                         ('https://archive.org/advancedsearch.php?'
-                          'q=mediatype%3A%28{}%29'
-                          '&fl[]=identifier&sort[]=&sort[]=&sort[]='
-                          '&rows=9999999&page=1'
-                          '&output=csv'
-                          '&callback=callback&save=yes').format(mtypestr),
-                         '-O', outpath])
-        AddIdents.from_file(adb, outpath, is_new_db, media_type)
-        os.remove(outpath)
+        #2001 is earliest ident year for archive.org items.
+        for year in range(2001, datetime.date.today().year+1):
+            outpath='/tmp/identList.'+str(int(time.time()))+str(year)+'.csv'
+            asserts.dne(goal, outpath)
+            subprocess.call(['wget',
+                             ('https://archive.org/advancedsearch.php?'
+                              'q=mediatype%3A%28{}%29+addeddate%3A%5B{}%5D&'
+                              '&fl[]=identifier&sort[]=&sort[]=&sort[]='
+                              '&rows=9999999&page=1'
+                              '&output=csv'
+                              '&callback=callback&save=yes').format(mtypestr, str(year)),
+                             '-O', outpath])
+            AddIdents.from_file(adb, outpath, is_new_db, media_type)
+            os.remove(outpath)
     
     @staticmethod
     def from_file(adb, l_ident, is_new_db, media_type=enums.MTYPES.AUDIO):
@@ -86,11 +88,13 @@ class AddIdents(Subcmd):
         line_zero=True
         with util.debug_open(goal, l_ident, 'r') as f_idents:
             for line in f_idents:
+                ident=line.rstrip().rstrip('"').lstrip('"')
                 if line_zero:
                     line_zero=False
-                    continue
+                    if ident=='identifier':
+                        continue
                 #rm trailing space and quotations
-                idents.append(line.rstrip()[1:-1])
+                idents.append(ident)
         AddIdents._from_identlist(adb, idents, is_new_db, media_type)
     
     @staticmethod
