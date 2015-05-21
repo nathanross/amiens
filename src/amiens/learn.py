@@ -155,10 +155,13 @@ class Learn(Subcmd):
         #    item['ident'], FetchInfo.FILEDATA)
         filedata_xml = FetchInfo.as_str(item['ident'],
                                         FetchInfo.FILEDATA)
-        filedata_etree = etree.fromstring(filedata_xml)
-        
-        msg_log.append((LogSeverity.DEBUG,
-                        etree.tostring(filedata_etree).decode()))
+        try:
+            filedata_etree = etree.fromstring(filedata_xml)
+        except:
+            filedata_etree = False
+            
+        #msg_log.append((LogSeverity.DEBUG,
+        #                etree.tostring(filedata_etree).decode()))
         if not filedata_etree:
             #if none found, mark it as nonexistent in the database.
             result['existsStatus'] = enums.EXISTS_STATUS.DELETED.value
@@ -202,7 +205,11 @@ class Learn(Subcmd):
                 continue
             st=_tn()
             Log.debug(result['metadata'])
-            metadata_etree = etree.fromstring(result['metadata'])
+            try:
+                metadata_etree = etree.fromstring(result['metadata'])
+            except:
+                result['rating'] = enums.RATING.SKIPPED.value
+                continue
             debug_stats['t_parse_mxml']+=_tdiff(st)
             matches = True
             stub=Stub.FromDict(result)
@@ -408,7 +415,7 @@ class Learn(Subcmd):
                 catalogue.store_metadata(*metadata_pair)
 
         for counter in debug_counters:
-            Log.outline(counter + ':' + str(debug_stats[counter]))
+            Log.write(counter + ':' + str(debug_stats[counter]))
     @staticmethod
     def cmd(args):
         catalogue=args['catalogue_path']
