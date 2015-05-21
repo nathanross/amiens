@@ -36,12 +36,11 @@ def audio_strict_long_hq(s, l):
     if (s / 1048576) > 1700:
         #assume uninterested in downloading things past the size of two FLAC cds.
         return False
-    print('fq`length:'+repr(l))    
+    print('fq`length:'+repr(l)+'  size:'+repr(s))    
     if l < (min_minutes * 60):
         #print('less than {}, skipping'.format(min_minutes*60))
         return False
 
-    print('fq`size:'+repr(s))    
     bytes_per_second=(s/l)
     kbps=bytes_per_second*(8/1024.)
     print('fq`kbps:'+repr(kbps))    
@@ -52,7 +51,9 @@ def audio_strict_long_hq(s, l):
     # 0.96x-4 is an initial wild guess of a
     # generous lower bound.
     if kbps < ((target_min_kbps*0.96)-4):
-        print('fq`skipping as is less than target {}'.format(((target_min_kbps*0.96)-4)))
+        print('fq`skipping as bitrate {} less than target {}'.format(
+            repr(kbps), ((target_min_kbps*0.96)-4)
+        ))
         return False
     return True
 
