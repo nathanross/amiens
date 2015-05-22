@@ -6,7 +6,7 @@ A library and command line tool for advanced (currently audio-only) media discov
 
  * search functions that use derivable data not available on archive.org (e.g. max or minimum total length of an item, audio bitrate (kbps) of an item). 
 
- * search functions that, for performance reasons, would be prohibitively expensive on a public-facing server that searched all of the archive's content. (e.g. searches with dozens of terms, searches for any words that contain or match a particular term)
+ * search functions that, for performance reasons, would be prohibitively expensive on a public-facing server that searched all of the archive's content. (e.g. instead of only searching isolated terms (exact matches), allow searches for words that contain or match particular terms; this means the search by necessity no longer can be const time (via const-time hash tables) for N archive items, instead being above const but sub-linear. - For a single user using a laptop processor, this is easily managable; on a public facing server you could get back to const most of the time by indexing the most popular 'match anywhere' terms and for ideographic alphabets indexing which items have the starting character, but there would be a long tail that would really slam the servers. Iterating over 50+ MB (tags and time metadata removed etc.) is just not cheap.
 
 Operates over an expandable (and controllable) subset of internet archive items, under the premise that for several use cases, having this advanced search functionality offers more utility than ensuring one is searching the entirety of archive.org
 
