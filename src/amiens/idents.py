@@ -37,21 +37,26 @@ class AddIdents(Subcmd):
                 'fetching the identifiers from the web')
         #UNTESTED    
         linectr=0
+        addctr=0
         c = adb.conn.cursor()
         for ident in idents:
             linectr+=1
             if (not is_new_db):
-               res=ArliDb.quick_select(c, ('tmpid',), 'WHERE ident=?',
-                                   (ident,), True)
-               if len(res) > 0:
-                    continue            
+                if linectr % 5000 == 0:
+                    Log.outline('num. checked:'+str(linectr))
+                
+                res=ArliDb.quick_select(c, ('tmpid',), 'WHERE ident=?',
+                                        (ident,), True)
+                if len(res) > 0:
+                    continue
+            addctr+=1
             instring="INSERT INTO items (ident, mediaType) VALUES (?,?)"
             util.Log.debug('I_sql: ' + instring)
             data=(ident, media_type.value)
             util.Log.debug('I_data: ' + repr(data))
             c.execute(instring, data)
-            if linectr % 10000 == 0:
-                print(str(linectr)+' added')
+            if addctr % 10000 == 0:
+                Log.writes(str(linectr)+' added')
                 #caching,writing much faster when lib handles it.
                 adb.conn.commit()
                 c = adb.conn.cursor()
@@ -115,6 +120,8 @@ class AddIdents(Subcmd):
         if data_src == None:
             AddIdents.from_web(adb, is_new_db, media_type)
         elif type(data_src) == str:
+            # adb connections will already be handled by the transform
+            # so string indicates its not an adb
             AddIdents.from_file(adb, data_src, is_new_db, media_type)
         else:
             AddIdents.from_otherdb(adb, data_src, is_new_db, media_type)
