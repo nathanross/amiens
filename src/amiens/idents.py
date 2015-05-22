@@ -56,7 +56,7 @@ class AddIdents(Subcmd):
             util.Log.debug('I_data: ' + repr(data))
             c.execute(instring, data)
             if addctr % 10000 == 0:
-                Log.writes(str(linectr)+' added')
+                Log.writes(str(addctr)+' added')
                 #caching,writing much faster when lib handles it.
                 adb.conn.commit()
                 c = adb.conn.cursor()
