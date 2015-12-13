@@ -127,6 +127,13 @@ class Transforms(object):
         asserts.that(arg <= 4, goal+' but it is higher than the maximum 4')
         asserts.that(arg >= 0, goal+' but it is lower than the minimum 0')
         return arg
+    
+    @staticmethod
+    def blockDownload(arg):
+        goal='received blockDownload argument'
+        asserts.that(arg <= 1, goal+' but it is higher than the maximum 1')
+        asserts.that(arg >= 0, goal+' but it is lower than the minimum 0')
+        return arg
 
     @staticmethod
     def max_connections(arg):
@@ -151,7 +158,7 @@ class Transforms(object):
             val=enums.RATING.CONFIRM_UNRATED.value
         elif arg in [ str(x) for x in range(1,6)]:
             val=enums.RATING.TOSS.value+(int(arg)-1)
-        elif arg != None:
-           Log.fatal('could not intrepret rating value {}'.format(arg))
+        elif arg != None:            
+            Log.fatal('could not intrepret rating value {}'.format(arg))
             
         return val

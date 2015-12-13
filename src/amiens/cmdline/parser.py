@@ -207,6 +207,10 @@ def parse(args_orig):
                      nargs='?', type=str, default=None,
                      help=('rate from 1-5'),
                      transform=Transforms.rating),
+                _Arg(ext='blockDownload', short='-b',
+                     nargs='?', type=int, default=None,
+                     help=('reset to 0'),
+                     transform=Transforms.blockDownload),
             ],
             callback = review.Review.cmd
         ),

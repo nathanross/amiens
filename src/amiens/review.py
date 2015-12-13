@@ -25,12 +25,14 @@ class Review(Subcmd):
     def cmd(args):
         adb = args['catalogue_path'].adb
         item = args['item']
-        for key in ('rating', 'comment'):
+        print(repr(args))
+        for key in ('rating', 'comment', 'blockDownload'):
             if args[key] == None:
                 continue
             val=args[key]
-            if val == item.data[key]:
-                continue
+            if key != 'blockDownload':
+                if val == item.data[key]:
+                    continue
             item.data[key] = val
             adb.one_off_update(((key, val),),
                                'WHERE tmpId=?',
