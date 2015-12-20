@@ -190,7 +190,7 @@ class Stub:
         
         return True
         
-    def _downloadOrchestrator(self, adb, fq, scratchdir, l_d_out, quality):        
+    def _downloadOrchestrator(self, adb, fq, scratchdir, l_d_out, quality, mark_downloaded):
         filedata_etree = FetchInfo.as_etree(self.data['ident'],
                                              FetchInfo.FILEDATA)        
         fnames=[]
@@ -230,13 +230,14 @@ class Stub:
         # quality levels are by definition going to be imperfect downloads as
         # many items will have some files Iarchive was able to convert
         # and some it was not able to.
-        adb.one_off_update(
-            (('blockDownload', enums.BLOCKDOWNLOAD.DOWNLOADED.value),),
-            'WHERE tmpId=?',
-            (self.data['tmpId'],)
-        )           
+        if mark_downloaded:
+            adb.one_off_update(
+                (('blockDownload', enums.BLOCKDOWNLOAD.DOWNLOADED.value),),
+                'WHERE tmpId=?',
+                (self.data['tmpId'],)
+            )           
         
-    def write(self, adb, fq, arg_scratchdir, l_out=None):
+    def write(self, adb, fq, arg_scratchdir, l_out=None, mark_downloaded=False):
         Log.outline('ident:'+self.data['ident'])
         #this system has FILESYSTEM lock,
         # but not OBJECT lock.
@@ -334,7 +335,8 @@ class Stub:
                 fq=fq,
                 scratchdir=scratchdir,
                 l_d_out=l,
-                quality=self.data['downloadLevel']
+                quality=self.data['downloadLevel'],
+                mark_downloaded=mark_downloaded
             )
             os.rmdir(scratchdir)
         

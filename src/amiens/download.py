@@ -29,4 +29,4 @@ class Download(Subcmd):
         filter_query = args['filter_fq'][0]
         item.data['downloadLevel']=quality
         item.write(adb, filter_query, scratchdir,
-                   l_out=item.path_from_rootdir(outdir))
+                   l_out=item.path_from_rootdir(outdir), mark_downloaded=False)
