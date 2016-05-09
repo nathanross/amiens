@@ -20,6 +20,7 @@ from amiens.core import util
 from amiens.core.util import Log
 from amiens.core import enums
 from amiens.core.stub import Stub
+from random import shuffle
 
 class Find(Subcmd):
     @staticmethod
@@ -39,6 +40,7 @@ class Find(Subcmd):
               enums.RATING.TOSS.value,
               test_limit)
         )
+        shuffle(tmpresults)
         results = []
         i=0
         for r in tmpresults:
