@@ -209,7 +209,7 @@ def parse(args_orig):
                      transform=Transforms.rating),
                 _Arg(ext='blockDownload', short='-b',
                      nargs='?', type=int, default=None,
-                     help=('reset to 0'),
+                     help=('set to 0 (not downloaded) or 1 (downloaded)'),
                      transform=Transforms.blockDownload),
             ],
             callback = review.Review.cmd
@@ -220,7 +220,9 @@ def parse(args_orig):
                          ' if the item exists already in the output'
                          ' directory, adds the files if none exist,'
                          ' or (atomically) upgrades the quality of'
-                         ' each file if the files are of lower size.'),
+                         ' each file if the files are of lower size.'
+                         ' Downloading a file does NOT prevent it '
+                         ' from being downloaded again (keeps blockDownload at 0)'),
             arguments = [
                 args['catalogue_path'],
                 args['item'],
